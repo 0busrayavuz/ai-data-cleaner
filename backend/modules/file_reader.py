@@ -43,7 +43,8 @@ def _read_csv(file_path: str) -> pd.DataFrame:
     # Önce UTF-8, hata verirse latin-1 dene
     for encoding in ["utf-8", "latin-1", "cp1254"]:
         try:
-            return pd.read_csv(file_path, encoding=encoding)
+            # on_bad_lines='skip' ile hatalı satırları atla
+            return pd.read_csv(file_path, encoding=encoding, on_bad_lines='skip')
         except UnicodeDecodeError:
             continue
     raise ValueError("Dosya encoding'i okunamadı.")
