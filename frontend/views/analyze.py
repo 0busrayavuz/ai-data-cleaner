@@ -6,14 +6,11 @@ def show_analyze_page():
     st.markdown(r'<h1 style="text-align: center; margin-bottom: 20px;">Data Analysis</h1>', unsafe_allow_html=True)
     
     # --- Upload Section (Clean White Card) ---
-    st.markdown(r'<div class="glass-card">', unsafe_allow_html=True)
     st.markdown(r"<h3>1. Upload Dataset</h3>", unsafe_allow_html=True)
     
     # File Uploader
     uploaded_file = st.file_uploader("Choose a CSV, Excel or TXT file", type=["csv", "xlsx", "txt"])
-    
-    st.markdown(r'</div>', unsafe_allow_html=True)
-    
+        
     if uploaded_file is not None:
         try:
             # Read Logic
