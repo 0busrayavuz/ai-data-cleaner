@@ -1,155 +1,83 @@
 import streamlit as st
-import pandas as pd
-import requests
-import os
+from components.layout import apply_custom_style
+# Lazy imports to avoid circular dependencies if any, though here it's fine
+from views.analyze import show_analyze_page
+from views.profile import show_profile_page
 
-API_URL = "http://127.0.0.1:8000"
-
-st.set_page_config(page_title="VeriTemiz AI", page_icon="🧹", layout="wide")
-
-# ── SIDEBAR ──
-with st.sidebar:
-    st.markdown("### 🧹 VeriTemiz AI")
-    st.markdown("**v1.0.0** | BLM 4121")
-    st.divider()
-    st.markdown("**Büşra Yavuz**  \n2211502034  \nOcak 2026")
-
-# ── MAIN ──
-st.title("🧹 Yapay Zekâ Destekli Veri Temizleme Sistemi")
-st.markdown("CSV, TXT, XLSX formatındaki veri setlerinizi yükleyin, analiz edin ve temizleyin.")
-
-# ── ADIM 1: Dosya Yükleme ──
-st.header("📂 1. Veri Yükleme")
-
-uploaded_file = st.file_uploader(
-    "Dosyanızı seçin",
-    type=["csv", "txt", "xlsx"],
-    help="Desteklenen formatlar: CSV, TXT, XLSX"
+# Set page config
+st.set_page_config(
+    page_title="PREDATA | Minimalist AI",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-if uploaded_file is not None:
-    # Backend'e dosya gönder
-    with st.spinner("Dosya yükleniyor..."):
-        files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
-        response = requests.post(f"{API_URL}/upload", files=files)
-        
-        if response.status_code == 200:
-            data = response.json()
-            dataset_id = data["dataset_id"]
-            meta = data["meta"]
-            
-            st.success(f"✅ Dosya başarıyla yüklendi! (Dataset ID: {dataset_id})")
-            
-            # Meta bilgileri göster
-            col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Dosya Adı", meta["filename"])
-            col2.metric("Format", meta["format"])
-            col3.metric("Satır Sayısı", f"{meta['row_count']:,}")
-            col4.metric("Sütun Sayısı", meta["col_count"])
-            
-            st.session_state["dataset_id"] = dataset_id
-            st.session_state["meta"] = meta
-        else:
-            st.error("❌ Dosya yüklenemedi.")
+# Initialize Session State
+if 'page' not in st.session_state:
+    st.session_state.page = 'Home'
 
-# ── ADIM 2: Analiz ──
-if "dataset_id" in st.session_state:
-    st.divider()
-    st.header("🔍 2. Veri Analizi")
-    
-    if st.button("Analizi Başlat", type="primary"):
-        with st.spinner("Analiz yapılıyor..."):
-            response = requests.get(f"{API_URL}/analyze/{st.session_state['dataset_id']}")
-            
-            if response.status_code == 200:
-                data = response.json()
-                profile = data["profile"]
-                recommendations = data["recommendations"]
-                
-                st.session_state["profile"] = profile
-                st.session_state["recommendations"] = recommendations
-                st.success("✅ Analiz tamamlandı!")
+# Apply Antigravity Design System
+apply_custom_style()
 
-# ── ADIM 3: Öneriler ──
-if "recommendations" in st.session_state:
-    st.divider()
-    st.header("💡 3. Öneriler ve Seçim")
-    
-    rec_data = st.session_state["recommendations"]
-    
-    st.metric("Toplam Problem", rec_data["total"])
-    
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Eksik Değer", rec_data["missing_count"])
-    col2.metric("Aykırı Değer", rec_data["outlier_count"])
-    col3.metric("Format Hatası", rec_data["format_count"])
-    
-    st.divider()
-    
-    # Her öneri için seçim dropdown'ı
-    if "user_selections" not in st.session_state:
-        st.session_state["user_selections"] = {}
-    
-    for rec in rec_data["recommendations"]:
-        with st.expander(f"{'🔴' if rec['severity']=='high' else '🟡' if rec['severity']=='medium' else '🟢'} [{rec['category'].upper()}] {rec['summary']}"):
-            st.markdown(f"**Sütun:** `{rec['column']}`")
-            
-            option_names = [opt["name"] for opt in rec["options"]]
-            selected = st.selectbox(
-                "Yöntem Seçin:",
-                option_names,
-                key=f"select_{rec['id']}"
-            )
-            
-            # Seçilen yöntemin detaylarını göster
-            for opt in rec["options"]:
-                if opt["name"] == selected:
-                    st.info(opt["desc"])
-                    st.session_state["user_selections"][rec['id']] = {
-                        "category": rec["category"],
-                        "column": rec["column"],
-                        "method": opt["id"]
-                    }
+# --- Custom Top Navigation Bar (Ultra Minimalist) ---
+st.markdown('<div style="height: 30px;"></div>', unsafe_allow_html=True) # Top Spacer
 
-# ── ADIM 4: Pipeline Uygula ──
-if "user_selections" in st.session_state and len(st.session_state["user_selections"]) > 0:
-    st.divider()
-    st.header("⚡ 4. Temizlik İşlemini Uygula")
+# Layout: Logo (Text) | Spacer | Home | Analyze | Profile | Spacer
+# We can use a simple text for the logo or an emoji
+col_logo, col_space1, col_home, col_analyze, col_profile, col_space2 = st.columns([1, 3, 1, 1, 1, 3])
+
+with col_logo:
+    st.markdown('<h3 style="margin:0; font-size: 24px;">PREDATA.</h3>', unsafe_allow_html=True)
+
+with col_home:
+    if st.button("HOME", key="nav_home", use_container_width=True):
+        st.session_state.page = "Home"
+        st.rerun()
+
+with col_analyze:
+    if st.button("ANALiZ", key="nav_analyze", use_container_width=True):
+        st.session_state.page = "Analyze"
+        st.rerun()
+
+with col_profile:
+    if st.button("PROFiL", key="nav_profile", use_container_width=True):
+        st.session_state.page = "Profile"
+        st.rerun()
+
+st.markdown('<div style="height: 50px;"></div>', unsafe_allow_html=True) # Spacer before content
+
+# --- Router Logic ---
+
+if st.session_state.page == 'Home':
+    # --- HERO SECTION (Minimalist Text) ---
     
-    st.write(f"**{len(st.session_state['user_selections'])} yöntem seçildi.**")
+    st.markdown(r"""
+        <div class="hero-container">
+            <h1 class="hero-title">Merhaba<br>Data Scientist.</h1>
+            <p class="hero-subtitle">Experience the future of data cleaning.<br>Fast. Intelligent. Native.</p>
+        </div>
+    """, unsafe_allow_html=True)
     
-    if st.button("🚀 Tümünü Uygula", type="primary"):
-        with st.spinner("Pipeline çalışıyor..."):
-            selections = list(st.session_state["user_selections"].values())
-            payload = {"selections": selections}
-            response = requests.post(
-                f"{API_URL}/apply/{st.session_state['dataset_id']}",
-                json=payload
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                st.success(f"✅ {result['applied_count']} işlem başarıyla uygulandı!")
-                
-                col1, col2 = st.columns(2)
-                col1.metric("Temizlik Öncesi Eksik %", f"%{result['before_missing_pct']}")
-                col2.metric("Temizlik Sonrası Eksik %", f"%{result['after_missing_pct']}")
-                
-                st.info(f"📁 Temizlenmiş dosya: `{result['output_path']}`")
-                
-                # Temizlenmiş dosyayı indir
-                with open(result['output_path'], 'rb') as f:
-                    st.download_button(
-                        label="⬇️ Temizlenmiş Dosyayı İndir",
-                        data=f,
-                        file_name=os.path.basename(result['output_path']),
-                        mime="text/csv"
-                    )
-                
-                # Logları göster
-                with st.expander("📋 İşlem Günlüğü"):
-                    for log in result["logs"]:
-                        icon = "✅" if log["status"] == "ok" else "❌"
-                        st.write(f"{icon} **[{log['timestamp']}]** {log['detail']}")
-            else:
-                st.error("❌ Pipeline uygulanamadı.")
+    # Marquee (Fixed Bottom)
+    st.markdown(r"""
+        <div class="marquee-container">
+            <div class="marquee-content">
+                <span class="marquee-item">PREDATA AI ENGINE</span>
+                <span class="marquee-item">SECURE DATA HANDLING</span>
+                <span class="marquee-item">AUTOMATED INSIGHTS</span>
+                <span class="marquee-item">INSTANT CLEANING</span>
+                <span class="marquee-item">EXPORT TO CSV/EXCEL</span>
+                <span class="marquee-item">PREDATA AI ENGINE</span>
+                <span class="marquee-item">SECURE DATA HANDLING</span>
+                <span class="marquee-item">AUTOMATED INSIGHTS</span>
+                <span class="marquee-item">INSTANT CLEANING</span>
+                <span class="marquee-item">EXPORT TO CSV/EXCEL</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+elif st.session_state.page == 'Analyze':
+    show_analyze_page()
+
+elif st.session_state.page == 'Profile':
+    show_profile_page()
