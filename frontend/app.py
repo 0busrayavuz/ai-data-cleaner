@@ -43,12 +43,12 @@ with col_home:
         st.rerun()
 
 with col_analyze:
-    if st.button("ANALiZ", key="nav_analyze", use_container_width=True):
+    if st.button("ANALYZE", key="nav_analyze", use_container_width=True):
         st.session_state.page = "Analyze"
         st.rerun()
 
 with col_profile:
-    if st.button("PROFiL", key="nav_profile", use_container_width=True):
+    if st.button("PROFILE", key="nav_profile", use_container_width=True):
         st.session_state.page = "Profile"
         st.rerun()
 

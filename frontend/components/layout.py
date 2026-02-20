@@ -291,6 +291,112 @@ def apply_custom_style():
             transform: translateY(0);
         }
 
+        /* 
+        --------------------------------------------------
+        ANALYZE PAGE — ANTIGRAVITY FLOATING CARDS
+        --------------------------------------------------
+        */
+
+        /* White floating card */
+        .ag-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(44, 62, 80, 0.08);
+            margin-bottom: 28px;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .ag-card:hover {
+            box-shadow: 0 16px 48px rgba(44, 62, 80, 0.13);
+            transform: translateY(-3px);
+        }
+
+        /* Deep blue card header */
+        .ag-card-header {
+            background: #2C3E50;
+            color: #FFFFFF !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 2px !important;
+            text-transform: uppercase;
+            padding: 14px 28px;
+        }
+
+        /* Card body padding */
+        .ag-card-body {
+            padding: 28px;
+        }
+
+        /* Cleaning column header label */
+        .ag-clean-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #2C3E50 !important;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Column A / B badge */
+        .ag-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .ag-badge-blue   { background: #2C3E50; }
+        .ag-badge-purple { background: #8E44AD; }
+
+        /* Override Streamlit radio label colours inside cards */
+        .ag-card-body .stRadio label {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 14px !important;
+            color: #2C3E50 !important;
+        }
+
+        /* Start Cleaning Button */
+        div[data-testid="column"] button[kind="secondary"],
+        div.stButton > button {
+            background: #2C3E50 !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 700 !important;
+            letter-spacing: 2px !important;
+            padding: 14px !important;
+            transition: background 0.3s ease, transform 0.2s ease !important;
+        }
+
+        div.stButton > button:hover {
+            background: #1A252F !important;
+            transform: translateY(-2px) !important;
+        }
+
+        /* Download button accent */
+        div.stDownloadButton > button {
+            background: linear-gradient(135deg, #27AE60, #1ABC9C) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 700 !important;
+            letter-spacing: 2px !important;
+        }
+
         </style>
         
         <!-- Persistent Robot Icon -->
