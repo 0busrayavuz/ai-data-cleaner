@@ -88,7 +88,7 @@ def apply_custom_style():
         div[data-testid="stHorizontalBlock"] button {
             background-color: transparent !important;
             border: none !important;
-            color: #2C3E50 !important;
+            color: #E69138 !important;
             font-family: 'Inter', sans-serif !important;
             font-weight: 600 !important;
             font-size: 15px !important;
@@ -170,14 +170,14 @@ def apply_custom_style():
             letter-spacing: -3px;
             
             /* Subtle Text Gradient to Deep Blue */
-            background: -webkit-linear-gradient(#1A1A1A, #2C3E50);
+            background: -webkit-linear-gradient(#1A1A1A, #E69138);
             -webkit-background-clip: text;
             /* -webkit-text-fill-color: transparent; Caution: can cause issues with !important color override, keeping solid for safety per prompt unless requested */
         }
 
         .hero-subtitle {
              font-size: 1.5rem;
-             color: #2C3E50 !important;
+             color: #E69138 !important;
              margin-top: 30px;
              margin-bottom: 50px;
              font-weight: 300;
@@ -212,7 +212,7 @@ def apply_custom_style():
         .marquee-item {
             display: inline-block;
             margin-right: 80px;
-            color: #2C3E50 !important;
+            color: #E69138 !important;
             font-family: 'Inter', sans-serif;
             font-weight: 600;
             font-size: 0.85rem;
@@ -281,7 +281,7 @@ def apply_custom_style():
             transform: translateY(10px);
             transition: all 0.3s ease;
             white-space: nowrap;
-            color: #2C3E50 !important;
+            color: #E69138 !important;
             font-weight: 600;
             pointer-events: none;
         }
@@ -314,7 +314,7 @@ def apply_custom_style():
 
         /* Deep blue card header */
         .ag-card-header {
-            background: #2C3E50;
+            background: #E69138;
             color: #FFFFFF !important;
             font-family: 'Inter', sans-serif !important;
             font-size: 13px !important;
@@ -337,7 +337,7 @@ def apply_custom_style():
             font-family: 'Inter', sans-serif;
             font-size: 14px;
             font-weight: 700;
-            color: #2C3E50 !important;
+            color: #E69138 !important;
             margin-bottom: 16px;
             letter-spacing: 0.5px;
         }
@@ -357,20 +357,20 @@ def apply_custom_style():
             flex-shrink: 0;
         }
 
-        .ag-badge-blue   { background: #2C3E50; }
+        .ag-badge-blue   { background: #E69138; }
         .ag-badge-purple { background: #8E44AD; }
 
         /* Override Streamlit radio label colours inside cards */
         .ag-card-body .stRadio label {
             font-family: 'Inter', sans-serif !important;
             font-size: 14px !important;
-            color: #2C3E50 !important;
+            color: #E69138 !important;
         }
 
         /* Start Cleaning Button */
         div[data-testid="column"] button[kind="secondary"],
         div.stButton > button {
-            background: #2C3E50 !important;
+            background: #E69138 !important;
             color: #FFFFFF !important;
             border: none !important;
             border-radius: 12px !important;
