@@ -130,10 +130,11 @@ def apply_custom_style():
         --------------------------------------------------
         */
         
-        /* Fade In Animation for Main Container */
+        /* layout.py içinde bu bloğu bul veya ekle */
         .block-container {
-            animation: fadeInScale 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-        }
+        padding-top: 0rem !important;    /* 2rem veya 5rem olan değeri 0 yaparsan en yukarı yapışır */
+        padding-bottom: 0rem !important;
+        animation: fadeInScale 0.6s cubic-bezier(0.22, 1, 0.36, 1);}
 
         @keyframes fadeInScale {
             0% { 
@@ -170,14 +171,14 @@ def apply_custom_style():
             letter-spacing: -3px;
             
             /* Subtle Text Gradient to Deep Blue */
-            background: -webkit-linear-gradient(#1A1A1A, #E69138);
+            background: -webkit-linear-gradient(#1A1A1A, #134F5C);
             -webkit-background-clip: text;
             /* -webkit-text-fill-color: transparent; Caution: can cause issues with !important color override, keeping solid for safety per prompt unless requested */
         }
 
         .hero-subtitle {
              font-size: 1.5rem;
-             color: #E69138 !important;
+             color: #134F5C !important;
              margin-top: 30px;
              margin-bottom: 50px;
              font-weight: 300;
@@ -212,7 +213,7 @@ def apply_custom_style():
         .marquee-item {
             display: inline-block;
             margin-right: 80px;
-            color: #E69138 !important;
+            color: #134F5C !important;
             font-family: 'Inter', sans-serif;
             font-weight: 600;
             font-size: 0.85rem;
@@ -281,7 +282,7 @@ def apply_custom_style():
             transform: translateY(10px);
             transition: all 0.3s ease;
             white-space: nowrap;
-            color: #E69138 !important;
+            color: #134F5C !important;
             font-weight: 600;
             pointer-events: none;
         }
@@ -314,7 +315,7 @@ def apply_custom_style():
 
         /* Deep blue card header */
         .ag-card-header {
-            background: #E69138;
+            background: #134F5C;
             color: #FFFFFF !important;
             font-family: 'Inter', sans-serif !important;
             font-size: 13px !important;
@@ -337,7 +338,7 @@ def apply_custom_style():
             font-family: 'Inter', sans-serif;
             font-size: 14px;
             font-weight: 700;
-            color: #E69138 !important;
+            color: #134F5C !important;
             margin-bottom: 16px;
             letter-spacing: 0.5px;
         }
@@ -357,20 +358,20 @@ def apply_custom_style():
             flex-shrink: 0;
         }
 
-        .ag-badge-blue   { background: #E69138; }
+        .ag-badge-blue   { background: #134F5C; }
         .ag-badge-purple { background: #8E44AD; }
 
         /* Override Streamlit radio label colours inside cards */
         .ag-card-body .stRadio label {
             font-family: 'Inter', sans-serif !important;
             font-size: 14px !important;
-            color: #E69138 !important;
+            color: #134F5C !important;
         }
 
         /* Start Cleaning Button */
         div[data-testid="column"] button[kind="secondary"],
         div.stButton > button {
-            background: #E69138 !important;
+            background: #134F5C !important;
             color: #FFFFFF !important;
             border: none !important;
             border-radius: 12px !important;
