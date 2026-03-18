@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 from sklearn.impute import KNNImputer, SimpleImputer
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+from sklearn.ensemble import ExtraTreesRegressor
 
 
 def analyze_missing(df: pd.DataFrame) -> dict:
@@ -21,6 +24,12 @@ def analyze_missing(df: pd.DataFrame) -> dict:
         # Sütun tipine göre öneri listesi oluştur
         if is_numeric:
             recommendations = [
+                {
+                    "id": "mice",
+                    "name": "AI Tahminci (MICE)",
+                    "desc": "Eksik değerleri, tablodaki diğer tüm sütunların desenlerini öğrenen bir Makine Öğrenmesi (ExtraTrees) modeli ile doldurur. Kurumsal standarttır.",
+                    "tags": ["Yapay Zeka", "En Yüksek Doğruluk"]
+                },
                 {
                     "id": "knn",
                     "name": "KNN Imputer (k=5)",
@@ -84,7 +93,18 @@ def apply_missing(df: pd.DataFrame, column: str, method: str) -> tuple[pd.DataFr
     """
     df = df.copy()
 
-    if method == "knn":
+    if method == "mice":
+        # Yalnızca sayısal sütunları seç, MICE modeli sayısal matris bekler
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        if column not in numeric_cols:
+            raise ValueError(f"MICE sadece sayısal sütunlara uygulanabilir. ({column})")
+        
+        # MICE (Iterative Imputer) ile diğer tüm sayısal değişkenleri kullanarak bu sütunu tahmin et
+        imputer = IterativeImputer(estimator=ExtraTreesRegressor(n_estimators=10, random_state=42), random_state=42, max_iter=10)
+        df[numeric_cols] = imputer.fit_transform(df[numeric_cols])
+        detail = f"{column} sütunu MICE (ExtraTrees) Modeli ile tüm bağıntılar hesaplanarak yapay zeka tarafından tahmin edildi."
+
+    elif method == "knn":
         imputer = KNNImputer(n_neighbors=5)
         df[[column]] = imputer.fit_transform(df[[column]])
         detail = f"{column} sütunu KNN Imputer (k=5) ile dolduruldu."

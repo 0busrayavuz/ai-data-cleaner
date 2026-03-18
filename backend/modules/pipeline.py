@@ -3,6 +3,7 @@ from datetime import datetime
 from backend.modules.missing_value import apply_missing
 from backend.modules.outlier_detector import apply_outlier
 from backend.modules.format_checker import apply_format
+from backend.modules.feature_engineering import apply_feature_engineering
 
 
 def run_pipeline(df: pd.DataFrame, selections: list[dict]) -> dict:
@@ -44,6 +45,9 @@ def run_pipeline(df: pd.DataFrame, selections: list[dict]) -> dict:
 
             elif category == "format":
                 current_df, detail = apply_format(current_df, column, method)
+
+            elif category == "feature":
+                current_df, detail = apply_feature_engineering(current_df, column, method)
 
             else:
                 detail = f"Bilinmeyen kategori: {category}"

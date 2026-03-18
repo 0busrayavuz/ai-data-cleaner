@@ -2,6 +2,7 @@ import pandas as pd
 from backend.modules.missing_value import analyze_missing
 from backend.modules.outlier_detector import analyze_outliers
 from backend.modules.format_checker import analyze_format
+from backend.modules.feature_engineering import analyze_features
 
 
 def generate_recommendations(df: pd.DataFrame) -> dict:
@@ -13,6 +14,7 @@ def generate_recommendations(df: pd.DataFrame) -> dict:
     missing_analysis  = analyze_missing(df)
     outlier_analysis  = analyze_outliers(df)
     format_analysis   = analyze_format(df)
+    feature_analysis  = analyze_features(df)
 
     recommendations = []
 
@@ -52,6 +54,17 @@ def generate_recommendations(df: pd.DataFrame) -> dict:
                 "severity": "low",
                 "options":  info["recommendations"],
             })
+
+    # ── Özellik Mühendisliği (Feature Engineering) önerileri ──
+    for col, info in feature_analysis.items():
+        recommendations.append({
+            "id":       f"feature_{col}",
+            "category": "feature",
+            "column":   col,
+            "summary":  f"{col} ({info['dtype']}): {len(info['recommendations'])} özellik mühendisliği önerisi",
+            "severity": "low",
+            "options":  info["recommendations"],
+        })
 
     return {
         "total":           len(recommendations),

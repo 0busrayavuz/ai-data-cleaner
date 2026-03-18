@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
+from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import StandardScaler
 
 
 def analyze_outliers(df: pd.DataFrame) -> dict:
@@ -33,6 +35,20 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
     else:
         lof_outlier_indices = []
 
+    # ── DBSCAN (Bağlamsal Yoğunluk Kümeleme - Çok Değişkenli) ──
+    if len(df_numeric) > 10:
+        try:
+            scaled_data = StandardScaler().fit_transform(df_numeric)
+            # Yüksek boyutlu veride epsilon değerini veri boyutuna göre ayarla
+            dbscan = DBSCAN(eps=2.5, min_samples=max(3, len(df_numeric) // 100))
+            db_labels = dbscan.fit_predict(scaled_data)
+            dbscan_outlier_indices = df_numeric.index[db_labels == -1].tolist()
+        except:
+            dbscan_outlier_indices = []
+    else:
+        dbscan_outlier_indices = []
+
+
     # Her sayısal sütun için sonuçları topla
     for col in numeric_cols:
         col_data = df[col].dropna()
@@ -44,6 +60,12 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
         iqr_outliers = col_data[(col_data < Q1 - 1.5 * IQR) | (col_data > Q3 + 1.5 * IQR)]
 
         recommendations = [
+            {
+                "id": "dbscan_drop",
+                "name": "Bağlamsal Aykırıları Sil (DBSCAN)",
+                "desc": "Yalnızca tek sütuna göre değil, yapay zeka ile tüm değişkenlerin yoğunluğuna göre bağlam-dışı kalan satırları siler.",
+                "tags": ["AI Modeli", "Çok Değişkenli"]
+            },
             {
                 "id": "cap",
                 "name": "Sınırla (Winsorize)",
@@ -74,6 +96,7 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
             "iqr_outlier_count": int(len(iqr_outliers)),
             "iso_outlier_count": int(sum(1 for i in iso_outlier_indices if df[col].notna().iloc[i] if i < len(df))),
             "lof_outlier_count": int(sum(1 for i in lof_outlier_indices if df[col].notna().iloc[i] if i < len(df))),
+            "dbscan_outlier_count": int(sum(1 for i in dbscan_outlier_indices if df[col].notna().iloc[i] if i < len(df))),
             "iqr_bounds": {"lower": round(Q1 - 1.5 * IQR, 2), "upper": round(Q3 + 1.5 * IQR, 2)},
             "recommendations": recommendations,
         }
@@ -111,6 +134,23 @@ def apply_outlier(df: pd.DataFrame, column: str, method: str) -> tuple[pd.DataFr
 
     elif method == "keep":
         detail = f"{column} sütunundaki aykırı değerler raporlandı, değiştirilmedi."
+
+    elif method == "dbscan_drop":
+        # DBSCAN ile tespit edilmiş tüm satırları bul ve o satırları düş
+        df_num = df.select_dtypes(include=[np.number]).dropna()
+        if len(df_num) > 10:
+            from sklearn.preprocessing import StandardScaler
+            from sklearn.cluster import DBSCAN
+            scaled = StandardScaler().fit_transform(df_num)
+            db = DBSCAN(eps=2.5, min_samples=max(3, len(df_num) // 100))
+            db_labels = db.fit_predict(scaled)
+            outlier_idx = df_num.index[db_labels == -1]
+            before = len(df)
+            df = df.drop(index=outlier_idx, errors='ignore')
+            dropped = before - len(df)
+            detail = f"DBSCAN clustering algoritması kullanılarak bağlamsal yönden aykırı {dropped} satır veri setinden çıkarıldı."
+        else:
+            detail = "Veri yetersiz olduğu için DBSCAN uygulanamadı."
 
     else:
         raise ValueError(f"Bilinmeyen yöntem: {method}")
