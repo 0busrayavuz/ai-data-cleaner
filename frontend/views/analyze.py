@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import requests
+
+API_URL = "http://localhost:8000"
 
 
 # ─── Helper: compute Data Health Score ────────────────────────────────────────
@@ -109,7 +112,7 @@ def show_analyze_page():
     """, unsafe_allow_html=True)
 
     # ── 1. Upload card ───────────────────────────────────────────────────────
-    st.markdown(_card_start("① Upload Dataset"), unsafe_allow_html=True)
+    st.markdown(_card_start("① Upload Dataset to AI Pipeline"), unsafe_allow_html=True)
     uploaded_file = st.file_uploader(
         "Drop a CSV, Excel or TXT file here",
         type=["csv", "xlsx", "txt"],
@@ -118,33 +121,59 @@ def show_analyze_page():
     st.markdown(_card_end(), unsafe_allow_html=True)
 
     if uploaded_file is None:
-        return  # Nothing more to show until file is uploaded
-
-    # ── Read file ────────────────────────────────────────────────────────────
-    try:
-        if uploaded_file.name.endswith(".csv"):
-            df = pd.read_csv(uploaded_file)
-        elif uploaded_file.name.endswith(".xlsx"):
-            df = pd.read_excel(uploaded_file)
-        else:
-            df = pd.read_csv(uploaded_file, sep=None, engine="python")
-    except Exception as e:
-        st.error(f"Could not read file: {e}")
         return
 
-    # ── 2. Data Health Score ─────────────────────────────────────────────────
-    score, missing_pct, dup_pct, outlier_pct = _compute_health(df)
+    # Store dataset_id in session state to avoid re-uploading on every render
+    if "dataset_id" not in st.session_state or st.session_state.get("last_uploaded") != uploaded_file.name:
+        with st.spinner("Uploading to AI Data Cleaner Backend..."):
+            try:
+                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "text/csv")}
+                res = requests.post(f"{API_URL}/upload", files=files)
+                if res.status_code == 200:
+                    data = res.json()
+                    st.session_state["dataset_id"] = data["dataset_id"]
+                    st.session_state["last_uploaded"] = uploaded_file.name
+                else:
+                    st.error(f"Backend upload error: {res.text}")
+                    return
+            except Exception as e:
+                st.error(f"Backend Server Error: {e}")
+                return
 
-    st.markdown(_card_start("② Data Health Score"), unsafe_allow_html=True)
+    dataset_id = st.session_state["dataset_id"]
 
+    # ── 2. Analysis ──────────────────────────────────────────────────────────
+    if "analysis" not in st.session_state or st.session_state.get("analysis_id") != dataset_id:
+        with st.spinner("AI Analyzing the dataset..."):
+            try:
+                res = requests.get(f"{API_URL}/analyze/{dataset_id}")
+                if res.status_code == 200:
+                    st.session_state["analysis"] = res.json()
+                    st.session_state["analysis_id"] = dataset_id
+                else:
+                    st.error("Failed to analyze dataset.")
+                    return
+            except Exception as e:
+                st.error(f"Backend Server Error: {e}")
+                return
+
+    analysis = st.session_state["analysis"]
+    profile = analysis.get("profile", {})
+    recs = analysis.get("recommendations", {"total": 0, "recommendations": []})
+
+    missing_pct = profile.get("missing_pct", 0)
+    outlier_count = recs.get("outlier_count", 0)
+    row_count = profile.get("row_count", 1)
+    
+    outlier_pct = (outlier_count / max(row_count, 1)) * 100
+    score = max(0, min(100, round(100 - missing_pct * 0.5 - outlier_pct * 0.5)))
+
+    st.markdown(_card_start("② Data Health Score (AI Assessed)"), unsafe_allow_html=True)
     g_col, stats_col = st.columns([1, 2])
-
     with g_col:
         st.markdown(_gauge_html(score), unsafe_allow_html=True)
-
     with stats_col:
         st.markdown("<br>", unsafe_allow_html=True)
-
         def _stat(label, value, color):
             return f"""
             <div style="display:flex; align-items:center; margin-bottom:18px;">
@@ -155,159 +184,88 @@ def show_analyze_page():
                               font-size:11px; text-transform:uppercase;
                               letter-spacing:2px; color:#7F8C8D; font-weight:600;">{label}</p>
                     <p style="margin:0; font-family:'Playfair Display',serif;
-                              font-size:24px; font-weight:700; color:#2C3E50;">{value}%</p>
+                              font-size:24px; font-weight:700; color:#2C3E50;">{value}</p>
                 </div>
             </div>"""
-
         st.markdown(
-            _stat("Missing Values", missing_pct, "#E74C3C") +
-            _stat("Duplicate Rows", dup_pct, "#F39C12") +
-            _stat("Outliers (Z>3)", outlier_pct, "#9B59B6"),
+            _stat("Missing Values", f"{missing_pct:.1f}%", "#E74C3C") +
+            _stat("Outliers Discovered", f"{outlier_count} rows", "#9B59B6"),
             unsafe_allow_html=True
         )
+    st.markdown(_card_end(), unsafe_allow_html=True)
+
+    # ── 3. AI Recommendations configuration ──────────────────────────────────
+    st.markdown(_card_start("③ AI Pipeline Recommendations"), unsafe_allow_html=True)
+    selections = []
+
+    if recs["total"] == 0:
+        st.info("No cleaning recommendations found. Your data looks perfect!")
+    else:
+        st.write("Review and select the AI operations to apply:")
+        for rec in recs["recommendations"]:
+            st.markdown(f"**{rec['category'].capitalize()}: {rec['column']}**")
+            st.caption(rec["summary"])
+            options = {opt["name"]: opt["id"] for opt in rec["options"]}
+            
+            selected_name = st.radio(
+                f"Action for {rec['column']} ({rec['category']})",
+                options=list(options.keys()),
+                key=rec["id"],
+                label_visibility="collapsed"
+            )
+            selections.append({
+                "category": rec["category"],
+                "column": rec["column"],
+                "method": options[selected_name]
+            })
+            st.divider()
 
     st.markdown(_card_end(), unsafe_allow_html=True)
 
-    # ── 3. Data Preview ──────────────────────────────────────────────────────
-    st.markdown(_card_start("③ Data Preview"), unsafe_allow_html=True)
-    st.markdown(
-        f'<p style="font-family:Inter,sans-serif; font-size:13px; color:#7F8C8D; margin-bottom:10px;">'
-        f'{len(df):,} rows × {len(df.columns)} columns</p>',
-        unsafe_allow_html=True
-    )
-    st.dataframe(df.head(10), use_container_width=True)
-    st.markdown(_card_end(), unsafe_allow_html=True)
+    # ── 4. Apply via Backend ─────────────────────────────────────────────────
+    if st.button("▶  APPLY AI PREPROCESSING", key="start_clean_btn", use_container_width=True):
+        if not selections:
+            st.warning("No actions selected.")
+            return
 
-    # ── 4. Configure Cleaning ────────────────────────────────────────────────
-    st.markdown(_card_start("④ Configure Cleaning"), unsafe_allow_html=True)
-
-    col_a, divider_col, col_b = st.columns([5, 1, 5])
-
-    with col_a:
-        st.markdown("""
-        <div class="ag-clean-label">
-            <span class="ag-badge ag-badge-blue">A</span>
-            Missing Values Strategy
-        </div>
-        """, unsafe_allow_html=True)
-        missing_method = st.radio(
-            "missing_method",
-            options=["Simple Imputer (Mean / Mode)", "KNN Imputer"],
-            label_visibility="collapsed"
-        )
-
-    with divider_col:
-        st.markdown(
-            '<div style="height:180px; width:1px; background:#E8EDF2; margin: 20px auto;"></div>',
-            unsafe_allow_html=True
-        )
-
-    with col_b:
-        st.markdown("""
-        <div class="ag-clean-label">
-            <span class="ag-badge ag-badge-purple">B</span>
-            Outlier Treatment Strategy
-        </div>
-        """, unsafe_allow_html=True)
-        outlier_method = st.radio(
-            "outlier_method",
-            options=["Z-Score Removal (|z| > 3)", "Isolation Forest"],
-            label_visibility="collapsed"
-        )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<p style="font-family:Inter,sans-serif; font-size:13px; color:#7F8C8D; margin-bottom:6px; font-weight:600; letter-spacing:1px; text-transform:uppercase;">Additional Options</p>', unsafe_allow_html=True)
-
-    add_col1, add_col2 = st.columns(2)
-    with add_col1:
-        remove_duplicates = st.checkbox("Remove Duplicate Rows", value=True)
-    with add_col2:
-        normalize_text = st.checkbox("Normalize Text (lowercase + strip)")
-
-    apply_missing = st.checkbox("Apply Missing Value Imputation", value=True)
-    apply_outliers = st.checkbox("Apply Outlier Treatment", value=False)
-
-    st.markdown(_card_end(), unsafe_allow_html=True)
-
-    # ── 5. Start cleaning ────────────────────────────────────────────────────
-    if st.button("▶  START CLEANING PROCESS", key="start_clean_btn", use_container_width=True):
-        with st.spinner("Applying transformations…"):
-            cleaned_df = df.copy()
-
+        with st.spinner("Backend AI models are processing the data..."):
             try:
-                # Remove duplicates
-                if remove_duplicates:
-                    cleaned_df = cleaned_df.drop_duplicates()
-
-                # Missing values
-                if apply_missing:
-                    numeric_cols = cleaned_df.select_dtypes(include="number").columns.tolist()
-                    cat_cols = cleaned_df.select_dtypes(include="object").columns.tolist()
-
-                    if missing_method.startswith("Simple"):
-                        if numeric_cols:
-                            cleaned_df[numeric_cols] = cleaned_df[numeric_cols].fillna(
-                                cleaned_df[numeric_cols].mean()
-                            )
-                        for col in cat_cols:
-                            if not cleaned_df[col].mode().empty:
-                                cleaned_df[col] = cleaned_df[col].fillna(cleaned_df[col].mode()[0])
-                    else:  # KNN
-                        from sklearn.impute import KNNImputer
-                        if numeric_cols:
-                            imputer = KNNImputer(n_neighbors=5)
-                            cleaned_df[numeric_cols] = imputer.fit_transform(cleaned_df[numeric_cols])
-                        for col in cat_cols:
-                            if not cleaned_df[col].mode().empty:
-                                cleaned_df[col] = cleaned_df[col].fillna(cleaned_df[col].mode()[0])
-
-                # Normalize text
-                if normalize_text:
-                    for col in cleaned_df.select_dtypes(include="object").columns:
-                        cleaned_df[col] = cleaned_df[col].str.lower().str.strip()
-
-                # Outliers
-                if apply_outliers:
-                    numeric_cols = cleaned_df.select_dtypes(include="number").columns.tolist()
-                    if numeric_cols:
-                        if outlier_method.startswith("Z-Score"):
-                            z = (cleaned_df[numeric_cols] - cleaned_df[numeric_cols].mean()) / cleaned_df[numeric_cols].std(ddof=0)
-                            cleaned_df = cleaned_df[(z.abs() <= 3).all(axis=1)]
-                        else:  # Isolation Forest
-                            from sklearn.ensemble import IsolationForest
-                            iso = IsolationForest(contamination=0.05, random_state=42)
-                            preds = iso.fit_predict(cleaned_df[numeric_cols].dropna())
-                            cleaned_df = cleaned_df.iloc[preds == 1]
-
-            except ImportError as ie:
-                st.error(f"Missing library: {ie}. Run `pip install scikit-learn` in your venv.")
-                return
+                res = requests.post(f"{API_URL}/apply/{dataset_id}", json={"selections": selections})
+                if res.status_code == 200:
+                    result = res.json()
+                    st.toast("✅ Backend Cleanup Complete!", icon="✅")
+                    
+                    st.markdown(_card_start("④ Process Result"), unsafe_allow_html=True)
+                    st.success(f"Successfully applied {result['applied_count']} AI operations.")
+                    if result['error_count'] > 0:
+                        st.error(f"Failed {result['error_count']} operations.")
+                    
+                    st.write(f"**Missing value percentage went from {result['before_missing_pct']}% to {result['after_missing_pct']}%**")
+                    
+                    st.markdown("### Process Logs")
+                    for log in result["logs"]:
+                        if log["status"] == "ok":
+                            st.write(f"✅ {log['detail']}")
+                        else:
+                            st.write(f"❌ {log['detail']}")
+                            
+                    output_path = result.get("output_path", "")
+                    try:
+                        import os
+                        if os.path.exists(output_path):
+                            with open(output_path, "rb") as f:
+                                st.download_button(
+                                    label="⬇ DOWNLOAD ENTERPRISE CLEANED DATASET",
+                                    data=f,
+                                    file_name=f"predata_ai_cleaned_{uploaded_file.name}",
+                                    mime="text/csv",
+                                    use_container_width=True
+                                )
+                    except Exception:
+                        st.error("Could not load the cleaned file from the output directory.")
+                        
+                    st.markdown(_card_end(), unsafe_allow_html=True)
+                else:
+                    st.error(f"Apply Failed: {res.text}")
             except Exception as e:
-                st.error(f"Cleaning error: {e}")
-                return
-
-        st.toast("✅ Cleaning complete!", icon="✅")
-
-        # ── Result card ──────────────────────────────────────────────────
-        after_score, *_ = _compute_health(cleaned_df)
-        delta = after_score - score
-
-        st.markdown(_card_start("⑤ Cleaning Result"), unsafe_allow_html=True)
-
-        r_col1, r_col2, r_col3 = st.columns(3)
-        r_col1.metric("Rows Before", f"{len(df):,}")
-        r_col2.metric("Rows After", f"{len(cleaned_df):,}", delta=f"{len(cleaned_df)-len(df):,}")
-        r_col3.metric("Health Score", f"{after_score}/100", delta=f"+{delta}" if delta >= 0 else str(delta))
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.dataframe(cleaned_df.head(10), use_container_width=True)
-
-        st.download_button(
-            label="⬇  DOWNLOAD CLEANED CSV",
-            data=cleaned_df.to_csv(index=False).encode("utf-8"),
-            file_name="predata_cleaned.csv",
-            mime="text/csv",
-            use_container_width=True
-        )
-
-        st.markdown(_card_end(), unsafe_allow_html=True)
+                st.error(f"Backend Server Error: {e}")
