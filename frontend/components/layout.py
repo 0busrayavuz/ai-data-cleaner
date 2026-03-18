@@ -398,12 +398,156 @@ def apply_custom_style():
             letter-spacing: 2px !important;
         }
 
+        /* Chat Popup */
+        .chat-popup {
+            position: fixed;
+            bottom: 120px;
+            right: 40px;
+            width: 350px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .chat-popup.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .chat-header {
+            background: #134F5C;
+            color: white;
+            padding: 15px 20px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+        }
+
+        .close-chat {
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        .close-chat:hover {
+            transform: scale(1.2) rotate(90deg);
+        }
+
+        .chat-body {
+            height: 350px;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: transparent;
+        }
+
+        .chat-msg {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 12px 16px;
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+            max-width: 85%;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: #2C3E50;
+            align-self: flex-start;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chat-msg.user {
+            background: rgba(19, 79, 92, 0.1);
+            border: 1px solid rgba(19, 79, 92, 0.2);
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 4px;
+            align-self: flex-end;
+        }
+
+        .chat-input-area {
+            padding: 15px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .chat-input {
+            flex: 1;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.8);
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #134F5C;
+        }
+
+        .chat-send-btn {
+            background: #134F5C;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-send-btn:hover {
+            background: #FF8C00;
+            transform: translateY(-2px);
+        }
         </style>
         
         <!-- Persistent Robot Icon -->
         <div class="floating-robot">
             🤖
             <div class="robot-thought">Antigravity 2.0 Active</div>
+        </div>
+
+        <!-- Chat Popup -->
+        <div class="chat-popup" id="predataChatPopup">
+            <div class="chat-header">
+                <div>🤖 PREDATA Assistant</div>
+                <div class="close-chat">×</div>
+            </div>
+            <div class="chat-body" id="chatBody">
+                <div class="chat-msg">
+                    Merhaba! Veri analizi ve temizleme işlemleriyle ilgili nasıl yardımcı olabilirim? 🚀
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" class="chat-input" placeholder="Bir soru sorun..."/>
+                <button class="chat-send-btn">➤</button>
+            </div>
         </div>
         
         <!-- 3D Tilt Script Injection (Vanilla Tilt) -->
@@ -418,3 +562,63 @@ def apply_custom_style():
             });
         </script>
     """, unsafe_allow_html=True)
+
+    import streamlit.components.v1 as components
+    components.html(r"""
+        <script>
+            const doc = window.parent.document;
+            const robotBtn = doc.querySelector('.floating-robot');
+            const popup = doc.getElementById('predataChatPopup');
+            const closeBtn = doc.querySelector('.close-chat');
+            const sendBtn = doc.querySelector('.chat-send-btn');
+            const chatInput = doc.getElementById('chatInput');
+            const chatBody = doc.getElementById('chatBody');
+
+            if (robotBtn) {
+                robotBtn.addEventListener('click', function() {
+                    if (popup) popup.classList.toggle('active');
+                });
+            }
+
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (popup) popup.classList.remove('active');
+                });
+            }
+
+            function sendChatMessage() {
+                if (!chatInput || !chatBody) return;
+                const message = chatInput.value.trim();
+                if (message !== "") {
+                    const userMsg = doc.createElement("div");
+                    userMsg.className = "chat-msg user";
+                    userMsg.innerText = message;
+                    chatBody.appendChild(userMsg);
+                    
+                    chatInput.value = "";
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                    
+                    setTimeout(function() {
+                        const botMsg = doc.createElement("div");
+                        botMsg.className = "chat-msg";
+                        botMsg.innerText = "Şu an demo modundayım ama yakında verilerinizi harika bir şekilde analiz edeceğim! 📊";
+                        chatBody.appendChild(botMsg);
+                        chatBody.scrollTop = chatBody.scrollHeight;
+                    }, 1000);
+                }
+            }
+
+            if (sendBtn) {
+                sendBtn.addEventListener('click', sendChatMessage);
+            }
+
+            if (chatInput) {
+                chatInput.addEventListener('keypress', function(event) {
+                    if (event.key === "Enter") {
+                        sendChatMessage();
+                    }
+                });
+            }
+        </script>
+    """, height=0, width=0)
