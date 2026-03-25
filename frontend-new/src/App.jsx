@@ -10,7 +10,7 @@ import { uploadFile, analyzeData, applyClean } from './services/api'
 function App() {
   const [status, setStatus] = useState('idle') // idle | uploading | analyzing | results | error
   const [errorMsg, setErrorMsg] = useState('')
-  const [filename, setFilename] = useState(null)
+  const [datasetId, setDatasetId] = useState(null)
   const [recommendations, setRecommendations] = useState([])
 
   const handleFileSelect = async (file) => {
@@ -18,11 +18,11 @@ function App() {
     setErrorMsg('')
     try {
       const uploadRes = await uploadFile(file)
-      const fname = uploadRes.filename
-      setFilename(fname)
+      const id = uploadRes.dataset_id
+      setDatasetId(id)
       setStatus('analyzing')
-      const analyzeRes = await analyzeData(fname)
-      setRecommendations(analyzeRes.recommendations || [])
+      const analyzeRes = await analyzeData(id)
+      setRecommendations(analyzeRes.recommendations?.recommendations || [])
       setStatus('results')
     } catch (e) {
       setErrorMsg(e.message || 'Something went wrong')
@@ -30,8 +30,8 @@ function App() {
     }
   }
 
-  const handleApply = async () => {
-    await applyClean(filename, recommendations.map(r => r.type))
+  const handleApply = async (selections) => {
+    await applyClean(datasetId, selections)
   }
 
   const renderStatus = () => {
@@ -57,7 +57,7 @@ function App() {
         {status === 'results' && (
           <AnalysisResults
             recommendations={recommendations}
-            filename={filename}
+            datasetId={datasetId}
             onApply={handleApply}
           />
         )}

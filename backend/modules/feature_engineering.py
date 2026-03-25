@@ -74,6 +74,13 @@ def analyze_features(df: pd.DataFrame) -> dict:
             })
 
         if recommendations:
+            # Default as skip so we don't forcefully overwrite
+            recommendations.insert(0, {
+                "id": "skip",
+                "name": "Değişiklik Yapma",
+                "desc": "Özellik mühendisliği uygulanmaz. Orijinal veri korunur.",
+                "tags": ["Varsayılan", "Güvenli"]
+            })
             result[col] = {
                 "dtype": str(df[col].dtype),
                 "recommendations": recommendations,
@@ -86,6 +93,9 @@ def apply_feature_engineering(df: pd.DataFrame, column: str, method: str) -> tup
     Seçilen özellik mühendisliği yöntemini uygular.
     """
     df = df.copy()
+
+    if method == "skip":
+        detail = f"{column} sütununa özellik mühendisliği uygulanmadı (atlandı)."
 
     if method == "extract_date_features":
         df[column] = pd.to_datetime(df[column], errors='coerce')

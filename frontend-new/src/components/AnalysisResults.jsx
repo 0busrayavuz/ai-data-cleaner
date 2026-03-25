@@ -2,14 +2,21 @@ import React, { useState } from 'react';
 import { CheckCircle, AlertCircle, Download } from 'lucide-react';
 import './AnalysisResults.css';
 
-const AnalysisResults = ({ recommendations, filename, onApply }) => {
+const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(false);
 
   const handleApply = async () => {
     setLoading(true);
     try {
-      await onApply();
+      // Backend beklediği format: { selections: [{ category, column, method }] }
+      const selections = recommendations.map(rec => ({
+        category: rec.category, // e.g. "missing", "outlier", "format"
+        column: rec.column,
+        method: rec.options && rec.options.length > 0 ? rec.options[0].id : "drop"
+      }));
+      
+      await onApply(selections);
       setApplied(true);
     } catch (e) {
       console.error(e);
@@ -32,9 +39,9 @@ const AnalysisResults = ({ recommendations, filename, onApply }) => {
             <div className="rec-header">
               <AlertCircle size={18} className="rec-icon" />
               <strong>{rec.column}</strong>
-              <span className="rec-type">{rec.type}</span>
+              <span className="rec-type">{rec.category}</span>
             </div>
-            <p className="rec-desc">{rec.description}</p>
+            <p className="rec-desc">{rec.summary}</p>
           </div>
         ))}
       </div>
@@ -53,7 +60,7 @@ const AnalysisResults = ({ recommendations, filename, onApply }) => {
             <CheckCircle size={20} />
             <span>All fixes applied! Your dataset is ready.</span>
             <a
-              href={`http://localhost:8000/download/${encodeURIComponent(filename)}`}
+              href={`http://localhost:8000/download/${datasetId}`}
               className="btn-primary"
               style={{ textDecoration: 'none', marginLeft: '12px', display: 'inline-block' }}
             >

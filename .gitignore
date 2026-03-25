@@ -1,0 +1,30 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Database
+*.sqlite3
+*.db
+
+# Node
+node_modules/
+
+# Local data / outputs
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep

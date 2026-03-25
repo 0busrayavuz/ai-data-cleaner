@@ -141,3 +141,21 @@ def get_logs(dataset_id: int):
     logs = db.query(CleaningLog).filter(CleaningLog.dataset_id == dataset_id).all()
     db.close()
     return {"logs": [{"column": l.column_name, "method": l.method, "detail": l.details, "time": str(l.applied_at)} for l in logs]}
+
+# ── 5. Dosya İndir ──
+from fastapi.responses import FileResponse
+
+@app.get("/download/{dataset_id}")
+def download_cleaned(dataset_id: int):
+    db = SessionLocal()
+    dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    db.close()
+
+    if not dataset:
+        raise HTTPException(status_code=404, detail="Veri seti bulunamadı.")
+
+    output_path = os.path.join(OUTPUT_DIR, f"cleaned_{dataset.filename}")
+    if not os.path.exists(output_path):
+        raise HTTPException(status_code=404, detail="Temizlenmiş dosya henüz oluşturulmadı.")
+
+    return FileResponse(path=output_path, filename=f"cleaned_{dataset.filename}", media_type='text/csv')

@@ -61,6 +61,12 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
 
         recommendations = [
             {
+                "id": "keep",
+                "name": "Olduğu Gibi Bırak",
+                "desc": "Aykırı değerlere dokunma, yalnızca raporla.",
+                "tags": ["Güvenli", "Varsayılan"]
+            },
+            {
                 "id": "dbscan_drop",
                 "name": "Bağlamsal Aykırıları Sil (DBSCAN)",
                 "desc": "Yalnızca tek sütuna göre değil, yapay zeka ile tüm değişkenlerin yoğunluğuna göre bağlam-dışı kalan satırları siler.",
@@ -83,13 +89,7 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
                 "name": "Medyan ile Değiştir",
                 "desc": "Aykırı değerleri sütun medyanıyla değiştirir.",
                 "tags": ["Sağlam", "Hızlı"]
-            },
-            {
-                "id": "keep",
-                "name": "Olduğu Gibi Bırak",
-                "desc": "Aykırı değerlere dokunma, yalnızca raporla.",
-                "tags": ["Güvenli", "Pasif"]
-            },
+            }
         ]
 
         result[col] = {
