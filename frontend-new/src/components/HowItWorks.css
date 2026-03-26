@@ -1,0 +1,105 @@
+.how-it-works-section {
+  padding: 4rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hiw-header {
+  margin-bottom: 4rem;
+}
+
+.hiw-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  width: 100%;
+}
+
+.hiw-step {
+  flex: 1;
+  position: relative;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hiw-step:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.step-number {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  box-shadow: 0 4px 15px var(--accent-glow);
+  border: 2px solid var(--bg-secondary);
+}
+
+.step-icon {
+  color: var(--accent-secondary);
+  background: rgba(59, 130, 246, 0.1);
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.hiw-step:hover .step-icon {
+  background: var(--accent-secondary);
+  color: white;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.hiw-step h4 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+}
+
+.hiw-step p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.step-arrow {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .hiw-steps {
+    flex-direction: column;
+    gap: 3rem;
+  }
+  
+  .step-arrow {
+    transform: rotate(90deg);
+  }
+}

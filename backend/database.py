@@ -4,11 +4,10 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 import os
 
-# Veritabanı dosyası database/ klasöründe oluşacak
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "database", "cleaner.db")
+# PostgreSQL Docker bağlantısı
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/cleaner_db"
 
-engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
@@ -53,10 +52,20 @@ class QualityReport(Base):
     created_at     = Column(DateTime, default=datetime.now)
 
 
+# ── TABLO 4: Kullanıcılar ──
+class User(Base):
+    __tablename__ = "users"
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    email           = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    created_at      = Column(DateTime, default=datetime.now)
+
+
 def init_db():
     """Tabloları oluşturur — uygulama ilk açılışında çağrılır."""
     Base.metadata.create_all(bind=engine)
-    print("[DB] Veritabanı hazır:", DB_PATH)
+    print("[DB] Veritabanı hazır: PostgreSQL (Docker)")
 
 
 def get_db():

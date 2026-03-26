@@ -3,26 +3,26 @@ import './AnalysisCards.css';
 
 const FEATURES = [
   {
-    title: 'Missing Value Imputation',
-    description: 'MICE, KNN, and median-based strategies auto-selected per column type.',
+    title: 'Eksik Veri Doldurma',
+    description: 'Sütun tipine ve veri dağılımına göre MICE, KNN veya basamaklı medyan stratejilerini otomatik belirler.',
     icon: '🔧',
     color: '#3b82f6',
   },
   {
-    title: 'Anomaly Detection',
-    description: 'DBSCAN clustering and Z-score analysis to surface hidden outliers.',
+    title: 'Aykırı Değer Tespiti',
+    description: 'DBSCAN kümeleme ve Isolation Forest ile gözle görülmeyen bağlamsal anormallikleri yüzeye çıkarır.',
     icon: '🔍',
     color: '#8b5cf6',
   },
   {
-    title: 'NLP Processing',
-    description: 'TF-IDF, lemmatization and semantic feature extraction from text columns.',
-    icon: '🧠',
+    title: 'Format Standardizasyonu',
+    description: 'Metin, tarih ve telefon numarası gibi alanlardaki tutarsızlıkları akıllı NLP destekli formatlayıcı ile onarır.',
+    icon: '✨',
     color: '#06b6d4',
   },
   {
-    title: 'Feature Engineering',
-    description: 'Automatic polynomial features, date decomposition, and categorical encoding.',
+    title: 'Özellik Mühendisliği',
+    description: 'Modelinizin başarısını artırmak için otomatik olarak yeni kategorik ve polinom özellikleri türetir.',
     icon: '⚙️',
     color: '#10b981',
   },
@@ -41,7 +41,7 @@ const TiltCard = ({ title, description, icon, color }) => {
     const rotateY = (x / rect.width) * 15;
 
     card.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.04)`;
-    card.style.boxShadow = `${-rotateY * 2}px ${rotateX * 2}px 30px rgba(${hexToRgb(color)}, 0.25)`;
+    card.style.boxShadow = `${-rotateY * 2}px ${rotateX * 2}px 30px rgba(${hexToRgb(color)}, 0.15)`;
   };
 
   const handleMouseLeave = () => {
@@ -78,10 +78,15 @@ const TiltCard = ({ title, description, icon, color }) => {
 
 const AnalysisCards = () => {
   return (
-    <section className="analysis-section">
-      <h3 className="section-heading">
-        What our <span className="glow-text">AI Pipeline</span> does
-      </h3>
+    <section className="analysis-section" style={{ padding: '5rem 0' }}>
+      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+        <h3 style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--text-primary)' }}>
+          <span className="glow-text">Yapay Zeka (AI)</span> Boru Hattımız Neler Yapar?
+        </h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto' }}>
+          Arka planda çalışan güçlü makine öğrenmesi modellerimiz, verinizi bir veri bilimci titizliğinde analiz eder ve otomatik düzeltmeler önerir.
+        </p>
+      </div>
       <div className="cards-grid">
         {FEATURES.map((feat) => (
           <TiltCard key={feat.title} {...feat} />

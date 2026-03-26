@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { CheckCircle, AlertCircle, Download } from 'lucide-react';
+import { CheckCircle, AlertCircle, Download, ChevronDown, ChevronRight } from 'lucide-react';
 import './AnalysisResults.css';
 
 const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [expandedIndex, setExpandedIndex] = useState(null);
+
+  const toggleExpand = (i) => {
+    setExpandedIndex(expandedIndex === i ? null : i);
+  };
 
   const handleApply = async () => {
     setLoading(true);
@@ -29,21 +34,41 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
 
   return (
     <section className="results-section">
-      <h3 className="section-heading">
-        Analysis <span className="glow-text">Recommendations</span>
+      <h3 className="section-heading" style={{ fontSize: '2.5rem', marginBottom: '2rem' }}>
+        Analiz <span className="glow-text">Önerileri</span>
       </h3>
 
       <div className="recommendations-list">
-        {recommendations.map((rec, i) => (
-          <div key={i} className="rec-item glass-panel">
-            <div className="rec-header">
-              <AlertCircle size={18} className="rec-icon" />
-              <strong>{rec.column}</strong>
-              <span className="rec-type">{rec.category}</span>
+        {recommendations.map((rec, i) => {
+          const isExpanded = expandedIndex === i;
+          return (
+            <div key={i} className={`rec-item glass-panel ${isExpanded ? 'expanded' : ''}`}>
+              <div className="rec-header">
+                <div className="rec-title-group">
+                  <AlertCircle size={18} className="rec-icon" />
+                  <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>{rec.column}</strong>
+                </div>
+                
+                <div className="rec-actions">
+                  <span className="rec-type">{rec.category}</span>
+                  <button 
+                    className={`btn-expand ${isExpanded ? 'active' : ''}`}
+                    onClick={() => toggleExpand(i)}
+                  >
+                    {isExpanded ? 'Kapat' : 'Detay Gör'}
+                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  </button>
+                </div>
+              </div>
+              
+              {isExpanded && (
+                <div className="rec-details">
+                  <p className="rec-desc">{rec.summary}</p>
+                </div>
+              )}
             </div>
-            <p className="rec-desc">{rec.summary}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="actions-row">
@@ -53,19 +78,19 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
             onClick={handleApply}
             disabled={loading}
           >
-            {loading ? 'Applying...' : 'Apply All Fixes'}
+            {loading ? 'Uygulanıyor...' : 'Tüm Düzeltmeleri Uygula'}
           </button>
         ) : (
           <div className="success-msg">
-            <CheckCircle size={20} />
-            <span>All fixes applied! Your dataset is ready.</span>
+            <CheckCircle size={24} />
+            <span>Tüm düzeltmeler uygulandı! Veri setiniz hazır.</span>
             <a
               href={`http://localhost:8000/download/${datasetId}`}
               className="btn-primary"
-              style={{ textDecoration: 'none', marginLeft: '12px', display: 'inline-block' }}
+              style={{ textDecoration: 'none', marginLeft: '16px', display: 'inline-flex', alignItems: 'center' }}
             >
-              <Download size={16} style={{ marginRight: 6 }} />
-              Download
+              <Download size={18} style={{ marginRight: 8 }} />
+              Temiz Veriyi İndir
             </a>
           </div>
         )}

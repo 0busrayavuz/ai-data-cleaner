@@ -5,7 +5,8 @@ import pandas as pd
 import shutil
 import os
 
-from backend.database import init_db, SessionLocal, Dataset, CleaningLog, QualityReport
+from backend.database import init_db, SessionLocal, Dataset, CleaningLog, QualityReport, User
+from backend.auth import get_password_hash, verify_password, create_access_token
 from backend.modules.file_reader import read_file, get_basic_profile
 from backend.modules.recommendation import generate_recommendations
 from backend.modules.pipeline import run_pipeline
@@ -27,6 +28,42 @@ def startup():
     init_db()
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# ── 0. Kimlik Doğrulama (Auth) ──
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+@app.post("/register")
+def register_user(user: UserCreate):
+    db = SessionLocal()
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if db_user:
+        db.close()
+        raise HTTPException(status_code=400, detail="Bu email adresi zaten kayıtlı.")
+    
+    new_user = User(email=user.email, hashed_password=get_password_hash(user.password))
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    db.close()
+    return {"message": "Kayıt başarılı", "user_id": new_user.id}
+
+@app.post("/login")
+def login_user(user: UserLogin):
+    db = SessionLocal()
+    db_user = db.query(User).filter(User.email == user.email).first()
+    db.close()
+    
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Geçersiz email veya şifre.")
+    
+    access_token = create_access_token(data={"sub": db_user.email})
+    return {"access_token": access_token, "token_type": "bearer", "email": db_user.email}
 
 
 # ── 1. Dosya Yükleme ──

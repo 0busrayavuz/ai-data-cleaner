@@ -10,15 +10,72 @@
 }
 
 .rec-item {
-  padding: 20px 24px;
-  border-left: 3px solid var(--accent-color);
+  padding: 16px 24px;
+  border-left: 4px solid var(--accent-secondary);
+  transition: all 0.3s ease;
+}
+
+.rec-item:hover {
+  background: rgba(0, 0, 0, 0.015);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+}
+
+.rec-item.expanded {
+  background: #ffffff;
+  border-left-color: var(--accent-primary);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
 .rec-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
+  transition: margin 0.3s ease;
+}
+
+.rec-item.expanded .rec-header {
+  margin-bottom: 12px;
+}
+
+.rec-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rec-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.btn-expand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.1);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-expand:hover {
+  background: rgba(0,0,0,0.03);
+  color: var(--text-primary);
+}
+
+.btn-expand.active {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-secondary);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .rec-icon {
@@ -28,21 +85,33 @@
 
 .rec-type {
   margin-left: auto;
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-secondary);
   font-size: 0.75rem;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 20px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
+.rec-details {
+  padding-left: 42px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .rec-desc {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .actions-row {

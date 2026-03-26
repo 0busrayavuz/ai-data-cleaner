@@ -4,6 +4,7 @@ import Hero from './components/Hero'
 import FileUpload from './components/FileUpload'
 import AnalysisCards from './components/AnalysisCards'
 import AnalysisResults from './components/AnalysisResults'
+import HowItWorks from './components/HowItWorks'
 import Footer from './components/Footer'
 import { uploadFile, analyzeData, applyClean } from './services/api'
 import Chatbot from './components/Chatbot'
@@ -90,6 +91,7 @@ function App() {
         {currentView === 'home' ? (
           <>
             <Hero />
+            <HowItWorks />
             <FileUpload onFileSelect={handleFileSelect} />
             {renderStatus()}
             {status === 'results' && (
