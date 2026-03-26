@@ -6,12 +6,29 @@ import AnalysisCards from './components/AnalysisCards'
 import AnalysisResults from './components/AnalysisResults'
 import Footer from './components/Footer'
 import { uploadFile, analyzeData, applyClean } from './services/api'
+import Chatbot from './components/Chatbot'
+import AuthModal from './components/AuthModal'
+import UserDashboard from './components/UserDashboard'
 
 function App() {
   const [status, setStatus] = useState('idle') // idle | uploading | analyzing | results | error
   const [errorMsg, setErrorMsg] = useState('')
   const [datasetId, setDatasetId] = useState(null)
   const [recommendations, setRecommendations] = useState([])
+  const [isAuthOpen, setIsAuthOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [currentView, setCurrentView] = useState('home') // home | dashboard
+
+  const handleLogin = (user) => {
+    setIsLoggedIn(true)
+    setIsAuthOpen(false)
+    setCurrentView('dashboard')
+  }
+
+  const handleLogout = () => {
+    setIsLoggedIn(false)
+    setCurrentView('home')
+  }
 
   const handleFileSelect = async (file) => {
     setStatus('uploading')
@@ -45,23 +62,50 @@ function App() {
     <div className="app-container container">
       <nav className="navbar">
         <h1 className="glow-text">AI Data Analyst Pro</h1>
-        <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Powered by FastAPI + React
-        </span>
+        <div className="nav-links">
+          <button 
+            className={`nav-btn ${currentView === 'home' ? 'active' : ''}`} 
+            onClick={() => setCurrentView('home')}
+          >
+            Ana Sayfa
+          </button>
+          
+          {isLoggedIn ? (
+            <>
+              <button 
+                className={`nav-btn ${currentView === 'dashboard' ? 'active' : ''}`}
+                onClick={() => setCurrentView('dashboard')}
+              >
+                Panelim
+              </button>
+              <button className="nav-btn" onClick={handleLogout}>Çıkış Yap</button>
+            </>
+          ) : (
+            <button className="nav-btn" onClick={() => setIsAuthOpen(true)}>Hesabım</button>
+          )}
+        </div>
       </nav>
 
       <main className="main-content">
-        <Hero />
-        <FileUpload onFileSelect={handleFileSelect} />
-        {renderStatus()}
-        {status === 'results' && (
-          <AnalysisResults
-            recommendations={recommendations}
-            datasetId={datasetId}
-            onApply={handleApply}
-          />
+        {currentView === 'home' ? (
+          <>
+            <Hero />
+            <FileUpload onFileSelect={handleFileSelect} />
+            {renderStatus()}
+            {status === 'results' && (
+              <AnalysisResults
+                recommendations={recommendations}
+                datasetId={datasetId}
+                onApply={handleApply}
+              />
+            )}
+            <AnalysisCards />
+          </>
+        ) : (
+          <UserDashboard />
         )}
-        <AnalysisCards />
+        <Chatbot />
+        <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onLogin={handleLogin} />
       </main>
 
       <Footer />

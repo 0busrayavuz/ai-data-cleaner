@@ -3,52 +3,98 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  position: relative;
 }
 
 .navbar {
-  padding: 20px 0;
+  padding: 24px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: linear-gradient(to bottom, rgba(248, 250, 252, 0.9), transparent);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .navbar h1 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 800;
   letter-spacing: -0.5px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+  color: var(--text-primary);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.nav-btn.active {
+  color: var(--accent-secondary);
+  background: rgba(59, 130, 246, 0.1);
 }
 
 .main-content {
   flex: 1;
   padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .status-msg {
   text-align: center;
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: 1.05rem;
   margin: 16px 0;
-  padding: 14px 24px;
-  background: var(--glass-bg);
+  padding: 16px 28px;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  border-radius: 16px;
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
-  animation: fadeIn 0.4s ease;
+  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(8px);
 }
 
 .status-msg.error {
   border-color: rgba(239, 68, 68, 0.4);
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.05);
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.08);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 640px) {
   .navbar h1 {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
   }
   .hero-title {
     font-size: 2.2rem;
