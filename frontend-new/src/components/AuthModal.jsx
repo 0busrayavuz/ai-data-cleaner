@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
-import { X, Mail, Lock, User, KeyRound, ArrowRight } from 'lucide-react';
+import { X, Mail, Lock, User, KeyRound, ArrowRight, Loader } from 'lucide-react';
+import { loginUser, registerUser } from '../services/api';
 import './AuthModal.css';
 
 const AuthModal = ({ isOpen, onClose, onLogin }) => {
   const [view, setView] = useState('login'); // 'login', 'register', 'forgot-password'
   const [animationClass, setAnimationClass] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Reset view when modal opens
   useEffect(() => {
     if (isOpen) {
       setView('login');
       setAnimationClass('fade-in-scale');
+      setErrorMsg('');
     } else {
       setAnimationClass('');
     }
@@ -18,6 +22,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
 
   const changeView = (newView) => {
     setAnimationClass('fade-out-left');
+    setErrorMsg('');
     setTimeout(() => {
       setView(newView);
       setAnimationClass('fade-in-right');
@@ -31,13 +36,32 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
     }, 300);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (view === 'login') {
-      const email = e.target.querySelector('input[type="email"]').value;
-      if (onLogin) onLogin({ email });
-    } else {
-      console.log(`Submitted form for view: ${view}`);
+    setErrorMsg('');
+    setLoading(true);
+
+    try {
+      if (view === 'login') {
+        const email = e.target.querySelector('input[type="email"]').value;
+        const password = e.target.querySelector('input[type="password"]').value;
+        const data = await loginUser(email, password);
+        localStorage.setItem('token', data.access_token);
+        if (onLogin) onLogin({ email: data.email });
+      } else if (view === 'register') {
+        const email = e.target.querySelector('input[type="email"]').value;
+        const password = e.target.querySelector('input[type="password"]').value;
+        await registerUser(email, password);
+        // Otomatik giriş ekranına yönlendir
+        changeView('login');
+        setTimeout(() => setErrorMsg('Kayıt başarılı! Lütfen giriş yapın.'), 400);
+      } else {
+        console.log(`Submitted form for view: ${view}`);
+      }
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,6 +83,8 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
               <h2 className="glow-text">Hoş Geldiniz</h2>
               <p className="auth-subtitle">Sisteme giriş yaparak verilerinizi yönetin.</p>
               
+              {errorMsg && <div className={`auth-message ${errorMsg.includes('başarılı') ? 'success' : 'error'}`}>{errorMsg}</div>}
+              
               <form onSubmit={handleSubmit} className="auth-form">
                 <div className="input-group">
                   <Mail className="input-icon" size={20} />
@@ -78,8 +104,8 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                     Şifremi Unuttum
                   </button>
                 </div>
-                <button type="submit" className="btn-primary auth-submit">
-                  Giriş Yap <ArrowRight size={18} />
+                <button type="submit" className="btn-primary auth-submit" disabled={loading}>
+                  {loading ? <Loader className="spin" size={18} /> : <>Giriş Yap <ArrowRight size={18} /></>}
                 </button>
               </form>
               
@@ -94,6 +120,8 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
               <h2 className="glow-text">Hesap Oluştur</h2>
               <p className="auth-subtitle">Veri temizleme uzmanı olmak için ilk adımı atın.</p>
               
+              {errorMsg && <div className="auth-message error">{errorMsg}</div>}
+              
               <form onSubmit={handleSubmit} className="auth-form">
                 <div className="input-group">
                   <User className="input-icon" size={20} />
@@ -107,8 +135,8 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                   <Lock className="input-icon" size={20} />
                   <input type="password" placeholder="Şifre" className="auth-input" required />
                 </div>
-                <button type="submit" className="btn-primary auth-submit">
-                  Kayıt Ol <ArrowRight size={18} />
+                <button type="submit" className="btn-primary auth-submit" disabled={loading}>
+                  {loading ? <Loader className="spin" size={18} /> : <>Kayıt Ol <ArrowRight size={18} /></>}
                 </button>
               </form>
               

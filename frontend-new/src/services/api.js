@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://127.0.0.1:8000';
 
 // 1. Dosya yükleme → { dataset_id, meta } döner
 export const uploadFile = async (file) => {
@@ -27,5 +27,32 @@ export const applyClean = async (datasetId, selections) => {
     body: JSON.stringify({ selections }),
   });
   if (!res.ok) throw new Error('Apply failed');
+  return res.json();
+};
+
+// 4. Kullanıcı işlemleri (Auth)
+export const registerUser = async (email, password) => {
+  const res = await fetch(`${BASE_URL}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || 'Kayıt başarısız');
+  }
+  return res.json();
+};
+
+export const loginUser = async (email, password) => {
+  const res = await fetch(`${BASE_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail || 'Giriş başarısız');
+  }
   return res.json();
 };
