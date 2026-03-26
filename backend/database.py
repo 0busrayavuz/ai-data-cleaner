@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 
 # PostgreSQL Docker bağlantısı
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/cleaner_db"
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:8543/cleaner_db"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine)
