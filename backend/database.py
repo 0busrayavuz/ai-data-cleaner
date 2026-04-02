@@ -4,10 +4,10 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 import os
 
-# PostgreSQL Docker bağlantısı
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@127.0.0.1:8543/cleaner_db"
+# SQLite (geliştirme modu - Docker gerekmez)
+SQLALCHEMY_DATABASE_URL = "sqlite:///./cleaner_dev.db"
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=False)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 

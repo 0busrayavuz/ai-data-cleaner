@@ -31,7 +31,8 @@ def generate_recommendations(df: pd.DataFrame) -> dict:
 
     # ── Aykırı değer önerileri ──
     for col, info in outlier_analysis.items():
-        total = max(info["iqr_outlier_count"], info["iso_outlier_count"])
+        # IQR deterministik ve temizleme sonrası doğru azalan sayıyı gösterir
+        total = info["iqr_outlier_count"]
         if total == 0:
             continue
         recommendations.append({

@@ -18,20 +18,24 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
         return result
 
     # ── IsolationForest (tüm sayısal sütunlara birlikte bakar) ──
+    # decision_function < 0 gerçek anomali eşiği, zorla %5 değil
     df_numeric = df[numeric_cols].dropna()
 
-    if len(df_numeric) > 10:  # Yeterli satır yoksa çalıştırma
-        iso = IsolationForest(contamination=0.05, random_state=42)
-        iso_labels = iso.fit_predict(df_numeric)
-        iso_outlier_indices = df_numeric.index[iso_labels == -1].tolist()
+    if len(df_numeric) > 10:
+        iso = IsolationForest(contamination="auto", random_state=42)
+        iso.fit(df_numeric)
+        iso_scores = iso.decision_function(df_numeric)
+        iso_outlier_indices = df_numeric.index[iso_scores < 0].tolist()
     else:
         iso_outlier_indices = []
 
     # ── LOF (tüm sayısal sütunlara birlikte bakar) ──
+    # negative_outlier_factor_ < -1.5 gerçek anomali eşiği
     if len(df_numeric) > 10:
-        lof = LocalOutlierFactor(n_neighbors=5, contamination=0.05)
-        lof_labels = lof.fit_predict(df_numeric)
-        lof_outlier_indices = df_numeric.index[lof_labels == -1].tolist()
+        lof = LocalOutlierFactor(n_neighbors=min(5, len(df_numeric) - 1))
+        lof.fit_predict(df_numeric)
+        lof_scores = lof.negative_outlier_factor_
+        lof_outlier_indices = df_numeric.index[lof_scores < -1.5].tolist()
     else:
         lof_outlier_indices = []
 
