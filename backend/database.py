@@ -4,10 +4,12 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 import os
 
-# SQLite (geliştirme modu - Docker gerekmez)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./cleaner_dev.db"
+# SQLite veya PostgreSQL URL'si (Docker üzerinden otomatik alınır)
+SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./cleaner_dev.db")
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}, echo=False)
+# check_same_thread parametresi sadece SQLite için geçerlidir
+connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 

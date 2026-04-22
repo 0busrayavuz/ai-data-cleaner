@@ -14,5 +14,32 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  backend:
+    build: 
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: cleaner-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/cleaner_db
+    depends_on:
+      - db
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+
+  frontend:
+    build:
+      context: ./frontend-new
+      dockerfile: Dockerfile
+    container_name: cleaner-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
