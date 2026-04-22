@@ -77,10 +77,22 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
                 "tags": ["AI Modeli", "Çok Değişkenli"]
             },
             {
+                "id": "iso_forest_drop",
+                "name": "İzolasyon Ormanı ile Sil (AI)",
+                "desc": "Ağaç tabanlı yapay zeka modeli ile normal veriden izole edilmiş anormal satırları siler.",
+                "tags": ["AI Modeli", "Topluluk (Ensemble)", "Güçlü"]
+            },
+            {
                 "id": "cap",
-                "name": "Sınırla (Winsorize)",
-                "desc": "Aykırı değerleri %5-%95 aralığına sıkıştırır. Veri kaybı olmaz.",
+                "name": "Sınırla (Winsorize - 1.5xIQR)",
+                "desc": "Aykırı değerleri katı istatistiksel sınırlara sıkıştırır. Veri kaybı olmaz.",
                 "tags": ["Güvenli", "Veri Korur"]
+            },
+            {
+                "id": "percentile_cap",
+                "name": "Oransal Kırpma (%5 - %95)",
+                "desc": "Değerleri alt (%5) ve üst (%95) esnek yüzdelik dilim aralığına sıkıştırır (Yumuşak Kırpma).",
+                "tags": ["İstatistik", "Esnek"]
             },
             {
                 "id": "drop_outliers",
@@ -155,6 +167,27 @@ def apply_outlier(df: pd.DataFrame, column: str, method: str) -> tuple[pd.DataFr
             detail = f"DBSCAN clustering algoritması kullanılarak bağlamsal yönden aykırı {dropped} satır veri setinden çıkarıldı."
         else:
             detail = "Veri yetersiz olduğu için DBSCAN uygulanamadı."
+
+    elif method == "iso_forest_drop":
+        df_num = df.select_dtypes(include=[np.number]).dropna()
+        if len(df_num) > 10:
+            from sklearn.ensemble import IsolationForest
+            iso = IsolationForest(contamination="auto", random_state=42)
+            iso.fit(df_num)
+            iso_scores = iso.decision_function(df_num)
+            outlier_idx = df_num.index[iso_scores < 0]
+            before = len(df)
+            df = df.drop(index=outlier_idx, errors='ignore')
+            dropped = before - len(df)
+            detail = f"Isolation Forest (AI) kullanılarak normal veriden izole olan {dropped} anormal satır veri setinden silindi."
+        else:
+            detail = "Veri yetersiz olduğu için Isolation Forest uygulanamadı."
+
+    elif method == "percentile_cap":
+        p_lower = df[column].quantile(0.05)
+        p_upper = df[column].quantile(0.95)
+        df[column] = df[column].clip(lower=p_lower, upper=p_upper)
+        detail = f"{column} sütunu %5 ve %95 oranlarıyla ([{round(p_lower,2)}, {round(p_upper,2)}]) aralığına yumuşak olarak sınırlandırıldı."
 
     else:
         raise ValueError(f"Bilinmeyen yöntem: {method}")

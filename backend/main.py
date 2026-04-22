@@ -153,8 +153,8 @@ def apply(dataset_id: int, request: ApplyRequest):
     # Kalite raporunu kaydet
     db.add(QualityReport(
         dataset_id     = dataset_id,
-        before_missing = result["before_missing_pct"],
-        after_missing  = result["after_missing_pct"],
+        before_missing = float(result["before_missing_pct"]),
+        after_missing  = float(result["after_missing_pct"]),
         outlier_count  = 0,
         format_errors  = 0,
     ))
@@ -162,10 +162,10 @@ def apply(dataset_id: int, request: ApplyRequest):
     db.close()
 
     return {
-        "applied_count":      result["applied_count"],
-        "error_count":        result["error_count"],
-        "before_missing_pct": result["before_missing_pct"],
-        "after_missing_pct":  result["after_missing_pct"],
+        "applied_count":      int(result["applied_count"]),
+        "error_count":        int(result["error_count"]),
+        "before_missing_pct": float(result["before_missing_pct"]),
+        "after_missing_pct":  float(result["after_missing_pct"]),
         "output_path":        output_path,
         "logs":               result["logs"],
     }
