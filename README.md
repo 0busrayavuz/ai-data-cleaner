@@ -1,4 +1,4 @@
-# 🚀 AI Data Cleaner (VeriTemiz AI) - Proje Başucu Rehberi
+# 🚀 AI Data Cleaner - Proje Başucu Rehberi
 
 AI Data Cleaner, kaba veri setlerindeki tutarsızlıkları, eksikleri ve aykırılıkları **yapay zeka ve gelişmiş istatistiksel modeller** kullanarak otonom şekilde çözen, son teknoloji bir "Akıllı Veri Temizleme ve Özellik Mühendisliği" (Feature Engineering) platformudur.
 
