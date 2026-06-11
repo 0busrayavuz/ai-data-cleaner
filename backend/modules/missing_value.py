@@ -95,18 +95,43 @@ def apply_missing(df: pd.DataFrame, column: str, method: str) -> tuple[pd.DataFr
 
     if method == "mice":
         # Yalnızca sayısal sütunları seç, MICE modeli sayısal matris bekler
-        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-        if column not in numeric_cols:
+        all_numeric = df.select_dtypes(include=[np.number]).columns.tolist()
+        if column not in all_numeric:
             raise ValueError(f"MICE sadece sayısal sütunlara uygulanabilir. ({column})")
-        
+        if df[column].isnull().all():
+            raise ValueError(f"'{column}' sütunu tamamen boş olduğu için MICE ile tahmin edilemez. Lütfen basit bir doldurma yöntemi seçin.")
+
+        # Sadece tamamen boş olmayan sayısal sütunları dahil et (sklearn'ün sütun silmesini engellemek için)
+        numeric_cols = [c for c in all_numeric if not df[c].isnull().all()]
+
+        missing_mask = df[column].isnull()
+
         # MICE (Iterative Imputer) ile diğer tüm sayısal değişkenleri kullanarak bu sütunu tahmin et
         imputer = IterativeImputer(estimator=ExtraTreesRegressor(n_estimators=10, random_state=42), random_state=42, max_iter=10)
-        df[numeric_cols] = imputer.fit_transform(df[numeric_cols])
-        detail = f"{column} sütunu MICE (ExtraTrees) Modeli ile tüm bağıntılar hesaplanarak yapay zeka tarafından tahmin edildi."
+        imputed_data = imputer.fit_transform(df[numeric_cols])
+        col_idx = numeric_cols.index(column)
+        predictions = pd.Series(imputed_data[:, col_idx], index=df.index)
+        df.loc[missing_mask, column] = predictions.loc[missing_mask]
+
+        detail = (
+            f"{column} sütunundaki {int(missing_mask.sum())} eksik değer MICE "
+            f"(ExtraTrees) modeliyle tahmin edildi."
+        )
 
     elif method == "knn":
+        all_numeric = df.select_dtypes(include=[np.number]).columns.tolist()
+        if column not in all_numeric:
+            raise ValueError(f"KNN sadece sayısal sütunlara uygulanabilir. ({column})")
+        if df[column].isnull().all():
+            raise ValueError(f"'{column}' sütunu tamamen boş olduğu için KNN ile tahmin edilemez. Lütfen basit bir doldurma yöntemi seçin.")
+
+        # Sadece tamamen boş olmayan sayısal sütunları dahil et
+        numeric_cols = [c for c in all_numeric if not df[c].isnull().all()]
+
         imputer = KNNImputer(n_neighbors=5)
-        df[[column]] = imputer.fit_transform(df[[column]])
+        imputed_data = imputer.fit_transform(df[numeric_cols])
+        col_idx = numeric_cols.index(column)
+        df[column] = imputed_data[:, col_idx]
         detail = f"{column} sütunu KNN Imputer (k=5) ile dolduruldu."
 
     elif method == "mean":

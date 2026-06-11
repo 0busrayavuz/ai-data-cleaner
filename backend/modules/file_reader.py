@@ -40,11 +40,20 @@ def read_file(file_path: str) -> tuple[pd.DataFrame, dict]:
 
 
 def _read_csv(file_path: str) -> pd.DataFrame:
-    # Önce UTF-8, hata verirse latin-1 dene
-    for encoding in ["utf-8", "latin-1", "cp1254"]:
+    # Önce UTF-8, hata verirse cp1254, sonra latin-1 dene
+    for encoding in ["utf-8", "cp1254", "latin-1"]:
         try:
-            # on_bad_lines='skip' ile hatalı satırları atla
-            return pd.read_csv(file_path, encoding=encoding, on_bad_lines='skip')
+            bad_lines = []
+            def catch_bad_line(line):
+                bad_lines.append(line)
+                return None
+            df = pd.read_csv(file_path, encoding=encoding, on_bad_lines=catch_bad_line, engine='python')
+            if bad_lines:
+                raise ValueError(
+                    f"Dosyada {len(bad_lines)} adet geçersiz/bozuk satır tespit edildi. "
+                    f"Lütfen CSV formatını ve sütun ayraçlarını kontrol edin."
+                )
+            return df
         except UnicodeDecodeError:
             continue
     raise ValueError("Dosya encoding'i okunamadı.")

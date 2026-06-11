@@ -44,16 +44,28 @@ def generate_recommendations(df: pd.DataFrame) -> dict:
             "options":  info["recommendations"],
         })
 
+    # Map each format issue type to its corresponding recommendation ID
+    ISSUE_OPTION_MAP = {
+        "numeric_as_string": "to_numeric",
+        "date_as_string": "to_datetime",
+        "whitespace": "strip_whitespace",
+        "case_inconsistency": "normalize_case",
+        "fuzzy_duplicates": "semantic_merge"
+    }
+
     # ── Format hata önerileri ──
     for col, info in format_analysis.items():
         for issue in info["issues"]:
+            target_opt_id = ISSUE_OPTION_MAP.get(issue["type"])
+            # Filter options to only include the one matching this issue's type
+            matching_opts = [opt for opt in info["recommendations"] if opt["id"] == target_opt_id]
             recommendations.append({
                 "id":       f"format_{col}_{issue['type']}",
                 "category": "format",
                 "column":   col,
                 "summary":  f"{col}: {issue['desc']}",
                 "severity": "low",
-                "options":  info["recommendations"],
+                "options":  matching_opts if matching_opts else info["recommendations"],
             })
 
     # ── Özellik Mühendisliği (Feature Engineering) önerileri ──

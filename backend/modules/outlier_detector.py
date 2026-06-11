@@ -110,9 +110,9 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
 
         result[col] = {
             "iqr_outlier_count": int(len(iqr_outliers)),
-            "iso_outlier_count": int(sum(1 for i in iso_outlier_indices if df[col].notna().iloc[i] if i < len(df))),
-            "lof_outlier_count": int(sum(1 for i in lof_outlier_indices if df[col].notna().iloc[i] if i < len(df))),
-            "dbscan_outlier_count": int(sum(1 for i in dbscan_outlier_indices if df[col].notna().iloc[i] if i < len(df))),
+            "iso_outlier_count": int(sum(1 for i in iso_outlier_indices if i in df.index and pd.notna(df.loc[i, col]))),
+            "lof_outlier_count": int(sum(1 for i in lof_outlier_indices if i in df.index and pd.notna(df.loc[i, col]))),
+            "dbscan_outlier_count": int(sum(1 for i in dbscan_outlier_indices if i in df.index and pd.notna(df.loc[i, col]))),
             "iqr_bounds": {"lower": round(Q1 - 1.5 * IQR, 2), "upper": round(Q3 + 1.5 * IQR, 2)},
             "recommendations": recommendations,
         }
@@ -120,7 +120,7 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
     return result
 
 
-def apply_outlier(df: pd.DataFrame, column: str, method: str) -> tuple[pd.DataFrame, str]:
+def apply_outlier(df: pd.DataFrame, column: str, method: str) -> tuple[pd.DataFrame, str, int]:
     """
     Seçilen aykırı değer yöntemini uygular.
     """
@@ -132,27 +132,32 @@ def apply_outlier(df: pd.DataFrame, column: str, method: str) -> tuple[pd.DataFr
     lower = Q1 - 1.5 * IQR
     upper = Q3 + 1.5 * IQR
 
+    changed_count = 0
+
     if method == "cap":
+        changed_count = int(((df[column] < lower) | (df[column] > upper)).sum())
         df[column] = df[column].clip(lower=lower, upper=upper)
         detail = f"{column} sütunu [{round(lower,2)}, {round(upper,2)}] aralığına sınırlandırıldı."
 
     elif method == "drop_outliers":
         before = len(df)
-        df = df[(df[column] >= lower) & (df[column] <= upper)]
+        df = df[((df[column] >= lower) & (df[column] <= upper)) | df[column].isna()]
         dropped = before - len(df)
+        changed_count = dropped
         detail = f"{column} sütunundaki {dropped} aykırı satır silindi."
 
     elif method == "median_replace":
-        median_val = df[column].median()
         mask = (df[column] < lower) | (df[column] > upper)
+        changed_count = int(mask.sum())
+        median_val = df[column].median()
         df.loc[mask, column] = median_val
         detail = f"{column} sütunundaki aykırı değerler medyan ({round(median_val,2)}) ile değiştirildi."
 
     elif method == "keep":
         detail = f"{column} sütunundaki aykırı değerler raporlandı, değiştirilmedi."
+        changed_count = 0
 
     elif method == "dbscan_drop":
-        # DBSCAN ile tespit edilmiş tüm satırları bul ve o satırları düş
         df_num = df.select_dtypes(include=[np.number]).dropna()
         if len(df_num) > 10:
             from sklearn.preprocessing import StandardScaler
@@ -164,9 +169,11 @@ def apply_outlier(df: pd.DataFrame, column: str, method: str) -> tuple[pd.DataFr
             before = len(df)
             df = df.drop(index=outlier_idx, errors='ignore')
             dropped = before - len(df)
+            changed_count = dropped
             detail = f"DBSCAN clustering algoritması kullanılarak bağlamsal yönden aykırı {dropped} satır veri setinden çıkarıldı."
         else:
             detail = "Veri yetersiz olduğu için DBSCAN uygulanamadı."
+            changed_count = 0
 
     elif method == "iso_forest_drop":
         df_num = df.select_dtypes(include=[np.number]).dropna()
@@ -179,17 +186,20 @@ def apply_outlier(df: pd.DataFrame, column: str, method: str) -> tuple[pd.DataFr
             before = len(df)
             df = df.drop(index=outlier_idx, errors='ignore')
             dropped = before - len(df)
+            changed_count = dropped
             detail = f"Isolation Forest (AI) kullanılarak normal veriden izole olan {dropped} anormal satır veri setinden silindi."
         else:
             detail = "Veri yetersiz olduğu için Isolation Forest uygulanamadı."
+            changed_count = 0
 
     elif method == "percentile_cap":
         p_lower = df[column].quantile(0.05)
         p_upper = df[column].quantile(0.95)
+        changed_count = int(((df[column] < p_lower) | (df[column] > p_upper)).sum())
         df[column] = df[column].clip(lower=p_lower, upper=p_upper)
         detail = f"{column} sütunu %5 ve %95 oranlarıyla ([{round(p_lower,2)}, {round(p_upper,2)}]) aralığına yumuşak olarak sınırlandırıldı."
 
     else:
         raise ValueError(f"Bilinmeyen yöntem: {method}")
 
-    return df, detail
+    return df, detail, changed_count

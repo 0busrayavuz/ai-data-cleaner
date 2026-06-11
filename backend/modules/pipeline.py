@@ -19,6 +19,8 @@ def run_pipeline(df: pd.DataFrame, selections: list[dict]) -> dict:
     """
     logs = []
     current_df = df.copy()
+    total_outliers_modified = 0
+    total_format_corrected = 0
 
     for selection in selections:
         category = selection.get("category")
@@ -41,16 +43,18 @@ def run_pipeline(df: pd.DataFrame, selections: list[dict]) -> dict:
                 current_df, detail = apply_missing(current_df, column, method)
 
             elif category == "outlier":
-                current_df, detail = apply_outlier(current_df, column, method)
+                current_df, detail, count = apply_outlier(current_df, column, method)
+                total_outliers_modified += count
 
             elif category == "format":
-                current_df, detail = apply_format(current_df, column, method)
+                current_df, detail, count = apply_format(current_df, column, method)
+                total_format_corrected += count
 
             elif category == "feature":
                 current_df, detail = apply_feature_engineering(current_df, column, method)
 
             else:
-                detail = f"Bilinmeyen kategori: {category}"
+                raise ValueError(f"Bilinmeyen kategori: {category}")
 
             logs.append({
                 "status":    "ok",
@@ -81,6 +85,8 @@ def run_pipeline(df: pd.DataFrame, selections: list[dict]) -> dict:
         "after_missing_pct":  after_missing_pct,
         "applied_count":      len([l for l in logs if l["status"] == "ok"]),
         "error_count":        len([l for l in logs if l["status"] == "error"]),
+        "outlier_count":      total_outliers_modified,
+        "format_errors":      total_format_corrected,
     }
 
 

@@ -12,7 +12,7 @@ def analyze_features(df: pd.DataFrame) -> dict:
         col_data = df[col].dropna()
         if len(col_data) == 0:
             continue
-            
+
         recommendations = []
         is_numeric = pd.api.types.is_numeric_dtype(df[col])
         is_datetime = pd.api.types.is_datetime64_any_dtype(df[col])
@@ -26,7 +26,7 @@ def analyze_features(df: pd.DataFrame) -> dict:
                 "desc": "Tarihten yıl, ay, gün ve haftanın günü sütunlarını otomatik türetir.",
                 "tags": ["Yapay Zeka", "Özellik Çıkarımı"]
             })
-            
+
         # ── 2. Kategorik Dönüşümler (Encoding) ──
         if is_object:
             unique_count = col_data.nunique()
@@ -46,7 +46,7 @@ def analyze_features(df: pd.DataFrame) -> dict:
                     "desc": "Çok fazla benzersiz değer içeren metinleri sayısal ID'lere dönüştürür.",
                     "tags": ["Dönüşüm", "Bellek Dostu"]
                 })
-                
+
         # ── 3. Sayısal Dönüşümler (Scaling & Skewness) ──
         if is_numeric:
             skewness = float(col_data.skew())
@@ -58,7 +58,7 @@ def analyze_features(df: pd.DataFrame) -> dict:
                     "desc": f"Veri dağılımı çarpık (skewness={skewness:.2f}). Log dönüşümü ile normal dağılıma yaklaştırılır.",
                     "tags": ["İstatistik", "Normalizasyon"]
                 })
-                
+
             # Standardization
             recommendations.append({
                 "id": "standard_scale",
@@ -96,6 +96,7 @@ def apply_feature_engineering(df: pd.DataFrame, column: str, method: str) -> tup
 
     if method == "skip":
         detail = f"{column} sütununa özellik mühendisliği uygulanmadı (atlandı)."
+        return df, detail
 
     if method == "extract_date_features":
         df[column] = pd.to_datetime(df[column], errors='coerce')
