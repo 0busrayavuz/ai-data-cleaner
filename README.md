@@ -53,4 +53,39 @@ Proje, güncel sanayi standartlarına uygun bir **Microservices (Mikroservis)** 
 ## 🔒 Projenin Güçlü Yönleri (Vurgulanması Gerekenler)
 - **Modülerlik:** Her analistin taktikleri ayrı dosyalardadır (`outlier_detector.py`, `feature_engineering.py`). Yeni bir algoritma eklemek kod yapısını bozmaz.
 - **Kullanıcı Kararı (Otonomi Kontrolü):** Temizlik katı kurallarla habersiz yapılmaz. Aykırı değer bulunan satırın silineceğine veya yapay zeka ile %5 - %95 bandında sıkıştırılacağına (Winsorize) kullanıcı şeffaf arayüz ile karar verir.
-- **Kesinlikle CORS & Bağlantı Problemleri Yoktur:** Hem container yapısındaki güvenlik zırhı (Port atamaları) hem de `localhost` proxy adaptasyonu tam stabil sağlanmıştır. 
+- **Kesinlikle CORS & Bağlantı Problemleri Yoktur:** Hem container yapısındaki güvenlik zırhı (Port atamaları) hem de `localhost` proxy adaptasyonu tam stabil sağlanmıştır.
+
+---
+
+## 🚀 Kurulum Önkoşulları
+
+Projeyi çalıştırmadan önce proje kök dizininde bir `.env` dosyası oluşturun. Örnek dosyayı kopyalayarak başlayabilirsiniz:
+
+```bash
+cp .env.example .env
+# Ardından .env dosyasını açıp POSTGRES_PASSWORD ve SECRET_KEY değerlerini güncelleyin.
+```
+
+| Değişken | Zorunlu | Açıklama |
+|---|---|---|
+| `POSTGRES_PASSWORD` | ✅ | Güçlü ve benzersiz bir parola seçin |
+| `SECRET_KEY` | ✅ | JWT imzalama anahtarı; `openssl rand -hex 32` ile üretilebilir |
+| `POSTGRES_USER` | — | Varsayılan: `postgres` |
+| `POSTGRES_DB` | — | Varsayılan: `cleaner_db` |
+
+> **Not — Arka plan görev dayanıklılığı:** Analiz ve temizleme işlemleri FastAPI `BackgroundTasks` ile çalışır. Sunucu kapanırsa yarım kalan görevler yeniden başlatılamaz; yeniden başlatmada `error` durumuna alınırlar. Çok-worker veya yüksek-ölçekli kurulumlar için Celery/RQ/ARQ gibi kalıcı bir görev kuyruğu entegre edilmelidir.
+
+---
+
+## 📧 SMTP (E-posta Sunucusu) Yapılandırması
+
+
+Parola sıfırlama özelliğinin e-posta gönderebilmesi için Docker kurulumunda SMTP bilgilerinin ayarlanması gerekir. `docker-compose.yml` dosyasındaki ilgili servis ortam değişkenlerine veya ana dizindeki `.env` dosyasına aşağıdaki ortam değişkenlerini girerek yapılandırmayı tamamlayabilirsiniz:
+
+- `SMTP_HOST`: SMTP e-posta sunucu adresi (Örn: `smtp.gmail.com`)
+- `SMTP_PORT`: E-posta sunucu portu (Örn: `587` veya `465`). Not: `465` portu doğrudan SSL/TLS şifreli bağlantı (SMTP_SSL) kurar; `587` ve diğer standart portlar ise STARTTLS protokolünü kullanır.
+- `SMTP_USER`: Gönderici e-posta kullanıcı adı / adresi (Örn: `ornek@gmail.com`)
+- `SMTP_PASSWORD`: E-posta sunucu uygulama şifresi (Örn: `xxxx xxxx xxxx xxxx`)
+
+**Geliştirme Sunucusu Davranışı (Fallback):**
+Eğer SMTP değişkenleri tanımlanmazsa (boş bırakılırsa), sistem otomatik olarak geliştirici modunda (development fallback) çalışacaktır. Bu modda e-posta gönderimi yapılmaz; şifre sıfırlama token'ları backend servis konsol loglarına yazdırılır. Arayüz üzerinden kod girilerek şifre sıfırlama işlemi sorunsuzca tamamlanabilir.
