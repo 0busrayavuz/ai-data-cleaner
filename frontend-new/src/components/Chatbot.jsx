@@ -1,13 +1,30 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot } from 'lucide-react';
 import './Chatbot.css';
+import { getStoredToken, sendAssistantChat } from '../services/api';
 
-const Chatbot = () => {
+const WELCOME = {
+  id: 'welcome',
+  text: 'Merhaba! Veri temizliği veya platform özellikleri hakkında size nasıl yardımcı olabilirim?',
+  sender: 'bot',
+  skipHistory: true,
+};
+
+function toGeminiMessages(list) {
+  return list
+    .filter((m) => !m.skipHistory)
+    .map((m) => ({
+      role: m.sender === 'user' ? 'user' : 'model',
+      text: m.text,
+    }));
+}
+
+const Chatbot = ({ onNeedAuth, isLoggedIn = false }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { id: 1, text: "Merhaba! Veri temizliği veya platform özellikleri hakkında size nasıl yardımcı olabilirim?", sender: 'bot' }
-  ]);
+  const [messages, setMessages] = useState([WELCOME]);
   const [inputValue, setInputValue] = useState('');
+  const [sending, setSending] = useState(false);
+  const [chatError, setChatError] = useState('');
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -18,34 +35,38 @@ const Chatbot = () => {
     if (isOpen) {
       scrollToBottom();
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, sending]);
 
   const toggleChat = () => setIsOpen(!isOpen);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || sending) return;
 
-    // Kullanıcı mesajı ekle
-    const newMsg = { id: Date.now(), text: inputValue.trim(), sender: 'user' };
-    setMessages(prev => [...prev, newMsg]);
+    if (!getStoredToken()) {
+      setChatError('');
+      onNeedAuth?.();
+      return;
+    }
+
+    const text = inputValue.trim();
+    const userMsg = { id: Date.now(), text, sender: 'user' };
+    const nextList = [...messages, userMsg];
+
     setInputValue('');
+    setChatError('');
+    setMessages(nextList);
+    setSending(true);
 
-    // Basit bir bot cevabı simüle edelim
-    setTimeout(() => {
-      let botReply = "Anlıyorum. Size en iyi şekilde yardımcı olabilmek için sorunuzu inceliyorum.";
-      
-      const lowerInput = newMsg.text.toLowerCase();
-      if (lowerInput.includes('eksik') || lowerInput.includes('missing')) {
-        botReply = "Eksik verileri çözmek için önerilen algoritmaları (Mean, Median, KNNImputer vb.) tablolardaki butonlarla otomatik uygulayabilirsiniz.";
-      } else if (lowerInput.includes('aykırı') || lowerInput.includes('outlier')) {
-        botReply = "Aykırı değer tespiti Isolation Forest, LOF ve DBSCAN destekli çalışır. Gerekirse sınırlandırabilir (Cap) veya silebilirsiniz.";
-      } else if (lowerInput.includes('indir') || lowerInput.includes('download')) {
-        botReply = "İşlemler tamamlandıktan sonra sonuç ekranında 'Temizlenmiş Veriyi İndir' butonu belirecektir.";
-      }
-
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: botReply, sender: 'bot' }]);
-    }, 1000);
+    try {
+      const payload = toGeminiMessages(nextList);
+      const { reply } = await sendAssistantChat(payload);
+      setMessages((prev) => [...prev, { id: Date.now() + 1, text: reply, sender: 'bot' }]);
+    } catch (err) {
+      setChatError(err?.message || 'Asistan yanıt veremedi.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -57,29 +78,52 @@ const Chatbot = () => {
               <Bot size={20} className="chatbot-icon" />
               <span>Veri Asistanı</span>
             </div>
-            <button className="chatbot-close" onClick={toggleChat} aria-label="Kapat">
+            <button type="button" className="chatbot-close" onClick={toggleChat} aria-label="Kapat">
               <X size={20} />
             </button>
           </div>
-          
+
+          {!isLoggedIn && (
+            <div className="chatbot-auth-hint" role="status">
+              Asistanı kullanmak için giriş yapın.
+              <button type="button" className="chatbot-auth-btn" onClick={() => onNeedAuth?.()}>
+                Giriş / kayıt
+              </button>
+            </div>
+          )}
+
+          {chatError ? <div className="chatbot-error">{chatError}</div> : null}
+
           <div className="chatbot-messages">
             {messages.map((msg) => (
               <div key={msg.id} className={`chat-message ${msg.sender}`}>
                 <div className="message-bubble">{msg.text}</div>
               </div>
             ))}
+            {sending ? (
+              <div className="chat-message bot" aria-live="polite">
+                <div className="message-bubble chatbot-typing">Yazıyor…</div>
+              </div>
+            ) : null}
             <div ref={messagesEndRef} />
           </div>
 
           <form className="chatbot-input-area" onSubmit={handleSend}>
-            <input 
-              type="text" 
-              placeholder="Bir soru sorun..." 
+            <input
+              type="text"
+              placeholder={isLoggedIn ? 'Bir soru sorun…' : 'Önce giriş yapın…'}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               className="chatbot-input"
+              disabled={!isLoggedIn || sending}
+              autoComplete="off"
             />
-            <button type="submit" className="chatbot-send" disabled={!inputValue.trim()}>
+            <button
+              type="submit"
+              className="chatbot-send"
+              disabled={!isLoggedIn || !inputValue.trim() || sending}
+              aria-label="Gönder"
+            >
               <Send size={18} />
             </button>
           </form>
@@ -87,8 +131,8 @@ const Chatbot = () => {
       )}
 
       {!isOpen && (
-        <button className="chatbot-toggle-btn bounce-in" onClick={toggleChat}>
-          <MessageSquare size={24} />
+        <button type="button" className="chatbot-toggle-btn bounce-in" onClick={toggleChat} aria-label="Yardımcı asistanı aç">
+          <MessageSquare size={26} strokeWidth={2.25} className="chatbot-fab-icon" />
         </button>
       )}
     </div>

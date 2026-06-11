@@ -1,16 +1,19 @@
-import React from 'react';
+import { Database } from 'lucide-react';
 import './Footer.css';
 
 const Footer = () => {
   return (
-    <footer className="footer glass-panel">
+    <footer className="footer">
       <div className="container footer-content">
-        <p className="glow-text">© 2026 AI Data Analyst Pro. All rights reserved.</p>
-        <div className="footer-links">
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-          <a href="#">Contact</a>
+        <div className="footer-brand">
+          <span className="footer-mark"><Database size={16} aria-hidden /></span>
+          <div>
+            <strong>VeriTemiz AI</strong>
+            <span>Karar destekli veri kalite platformu</span>
+          </div>
         </div>
+        <p className="footer-stack">FastAPI · React · PostgreSQL · scikit-learn</p>
+        <p className="footer-copy">© {new Date().getFullYear()} Bitirme projesi</p>
       </div>
     </footer>
   );

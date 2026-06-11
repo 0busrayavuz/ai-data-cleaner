@@ -1,96 +1,87 @@
-import React, { useEffect, useRef } from 'react';
+import { createElement } from 'react';
+import {
+  Binary,
+  BrainCircuit,
+  Braces,
+  ChartNoAxesCombined,
+  CircleDotDashed,
+  FileCheck2,
+} from 'lucide-react';
 import './AnalysisCards.css';
 
-const FEATURES = [
+const METHODS = [
   {
-    title: 'Eksik Veri Doldurma',
-    description: 'Sütun tipine ve veri dağılımına göre MICE, KNN veya basamaklı medyan stratejilerini otomatik belirler.',
-    icon: '🔧',
-    color: '#3b82f6',
+    icon: BrainCircuit,
+    eyebrow: 'Eksik veri',
+    title: 'Akıllı tamamlama',
+    description: 'MICE ve KNN ile diğer sütunlardaki örüntülerden yararlanarak tahmin üretir.',
+    methods: ['MICE', 'KNN Imputer', 'Ortalama / Medyan'],
+    tone: 'emerald',
   },
   {
-    title: 'Aykırı Değer Tespiti',
-    description: 'DBSCAN kümeleme ve Isolation Forest ile gözle görülmeyen bağlamsal anormallikleri yüzeye çıkarır.',
-    icon: '🔍',
-    color: '#8b5cf6',
+    icon: CircleDotDashed,
+    eyebrow: 'Anomali',
+    title: 'Çok yöntemli tespit',
+    description: 'Tek değişkenli ve bağlamsal anomalileri farklı algoritmalarla karşılaştırır.',
+    methods: ['Isolation Forest', 'DBSCAN', 'IQR'],
+    tone: 'cyan',
   },
   {
-    title: 'Format Standardizasyonu',
-    description: 'Metin, tarih ve telefon numarası gibi alanlardaki tutarsızlıkları akıllı NLP destekli formatlayıcı ile onarır.',
-    icon: '✨',
-    color: '#06b6d4',
+    icon: Braces,
+    eyebrow: 'Format',
+    title: 'Tutarlılık onarımı',
+    description: 'Metin, tarih, sayısal tip ve benzer kategori problemlerini standartlaştırır.',
+    methods: ['Tip dönüşümü', 'Fuzzy eşleme', 'Metin normalizasyonu'],
+    tone: 'amber',
   },
   {
-    title: 'Özellik Mühendisliği',
-    description: 'Modelinizin başarısını artırmak için otomatik olarak yeni kategorik ve polinom özellikleri türetir.',
-    icon: '⚙️',
-    color: '#10b981',
+    icon: Binary,
+    eyebrow: 'Özellik',
+    title: 'Model öncesi hazırlık',
+    description: 'Kategorik ve sayısal değişkenleri makine öğrenmesi için hazır hale getirir.',
+    methods: ['One-hot', 'Label encoding', 'Ölçekleme'],
+    tone: 'violet',
   },
 ];
 
-const TiltCard = ({ title, description, icon, color }) => {
-  const cardRef = useRef(null);
-
-  const handleMouseMove = (e) => {
-    const card = cardRef.current;
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    const rotateX = (-y / rect.height) * 15;
-    const rotateY = (x / rect.width) * 15;
-
-    card.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.04)`;
-    card.style.boxShadow = `${-rotateY * 2}px ${rotateX * 2}px 30px rgba(${hexToRgb(color)}, 0.15)`;
-  };
-
-  const handleMouseLeave = () => {
-    const card = cardRef.current;
-    if (!card) return;
-    card.style.transform = 'perspective(600px) rotateX(0) rotateY(0) scale(1)';
-    card.style.boxShadow = '';
-  };
-
-  const hexToRgb = (hex) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    return `${r}, ${g}, ${b}`;
-  };
-
-  return (
-    <div
-      ref={cardRef}
-      className="tilt-card glass-panel"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ '--card-accent': color }}
-    >
-      <div className="card-icon-wrap">
-        <span className="card-icon">{icon}</span>
-      </div>
-      <h4 className="card-title">{title}</h4>
-      <p className="card-desc">{description}</p>
-      <div className="card-glow" style={{ background: color }}></div>
-    </div>
-  );
-};
-
 const AnalysisCards = () => {
   return (
-    <section className="analysis-section" style={{ padding: '5rem 0' }}>
-      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <h3 style={{ fontSize: '2.5rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-          <span className="glow-text">Yapay Zeka (AI)</span> Boru Hattımız Neler Yapar?
-        </h3>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto' }}>
-          Arka planda çalışan güçlü makine öğrenmesi modellerimiz, verinizi bir veri bilimci titizliğinde analiz eder ve otomatik düzeltmeler önerir.
+    <section className="analysis-section" aria-labelledby="methods-heading">
+      <div className="analysis-intro">
+        <div>
+          <span className="analysis-overline"><ChartNoAxesCombined size={15} /> Yöntem kütüphanesi</span>
+          <h3 id="methods-heading">Tek algoritmaya bağlı kalmayan analiz.</h3>
+        </div>
+        <p>
+          Veri tipine ve probleme göre farklı istatistiksel ve makine öğrenmesi
+          yöntemleri sunulur. Son kararı kullanıcı verir.
         </p>
       </div>
-      <div className="cards-grid">
-        {FEATURES.map((feat) => (
-          <TiltCard key={feat.title} {...feat} />
+
+      <div className="method-grid">
+        {METHODS.map(({ icon, eyebrow, title, description, methods, tone }) => (
+          <article className={`method-card method-card--${tone}`} key={title}>
+            <div className="method-card-top">
+              <span className="method-icon">
+                {createElement(icon, { size: 22, 'aria-hidden': true })}
+              </span>
+              <span className="method-eyebrow">{eyebrow}</span>
+            </div>
+            <h4>{title}</h4>
+            <p>{description}</p>
+            <div className="method-tags">
+              {methods.map((method) => <span key={method}>{method}</span>)}
+            </div>
+          </article>
         ))}
+      </div>
+
+      <div className="analysis-note">
+        <FileCheck2 size={20} aria-hidden />
+        <div>
+          <strong>Sonuç yalnızca temiz veri değil.</strong>
+          <span>Uygulanan yöntemler, kalite değişimi ve işlem geçmişi raporlanır.</span>
+        </div>
       </div>
     </section>
   );

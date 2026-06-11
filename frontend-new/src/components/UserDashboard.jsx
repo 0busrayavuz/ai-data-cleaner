@@ -1,102 +1,290 @@
-import { Activity, Database, Clock, Download, ChevronRight } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { Activity, Database, Clock, Download, FileSearch, FileSpreadsheet, History, Plus, RefreshCw } from 'lucide-react';
+import { fetchMyDatasets, downloadCleanedDataset, downloadAuditExport, fetchProjectTimeline, downloadQualityReport } from '../services/api';
 import './UserDashboard.css';
 
-const MOCK_HISTORY = [];
+const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
+  const [payload, setPayload] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [filterProjectId, setFilterProjectId] = useState('');
+  const [timeline, setTimeline] = useState(null);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+  const [timelineError, setTimelineError] = useState('');
 
-const UserDashboard = () => {
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const pid = filterProjectId === '' ? null : Number(filterProjectId);
+      const data = await fetchMyDatasets(pid);
+      setPayload(data);
+      setError('');
+    } catch (e) {
+      setError(e.message || 'Veriler yüklenemedi');
+    } finally {
+      setLoading(false);
+    }
+  }, [filterProjectId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!filterProjectId) {
+      setTimeline(null);
+      setTimelineError('');
+      return;
+    }
+    let cancelled = false;
+    setTimelineLoading(true);
+    setTimelineError('');
+    fetchProjectTimeline(Number(filterProjectId))
+      .then((t) => {
+        if (!cancelled) setTimeline(t);
+      })
+      .catch((e) => {
+        if (!cancelled) setTimelineError(e.message || 'Zaman çizelgesi yüklenemedi');
+      })
+      .finally(() => {
+        if (!cancelled) setTimelineLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filterProjectId]);
+
+  const rows = payload?.datasets ?? [];
+  const stats = payload?.stats ?? { total_rows_processed: 0, dataset_count: 0, cleaned_dataset_count: 0 };
+  const projects = payload?.projects ?? [];
+
+  const formatDate = (iso) => {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString('tr-TR');
+    } catch {
+      return iso;
+    }
+  };
+
+  const handleDownload = async (row) => {
+    const stem = (row.original_filename || 'veri').replace(/\.[^/.]+$/, '');
+    await downloadCleanedDataset(row.id, `cleaned_${stem}.csv`);
+  };
+
+  const handleAuditExport = async (row) => {
+    await downloadAuditExport(row.id);
+  };
+
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
-        <h2 className="glow-text">Analiz Paneliniz</h2>
-        <p className="dashboard-subtitle">Geçmiş temizlik raporlarınıza ve veri istatistiklerinize buradan ulaşabilirsiniz.</p>
+        <div>
+          <span className="dashboard-overline">Çalışma alanı</span>
+          <h2>Veri kalite paneli</h2>
+          <p className="dashboard-subtitle">
+            Projelerinizi, veri setlerinizi ve işlem geçmişinizi tek noktadan yönetin.
+          </p>
+          {userEmail && <span className="dashboard-user">{userEmail}</span>}
+        </div>
+        <button type="button" className="btn-primary dashboard-new-analysis" onClick={onNewAnalysis}>
+          <Plus size={18} aria-hidden /> Yeni analiz
+        </button>
       </header>
 
-      <section className="dashboard-stats">
-        <div className="stat-card glass-panel">
-          <div className="stat-icon-wrapper blue">
-            <Database size={24} />
-          </div>
-          <div className="stat-info">
-            <h3>Toplam İşlenen Satır</h3>
-            <p className="stat-value">0</p>
-          </div>
-        </div>
-        <div className="stat-card glass-panel">
-          <div className="stat-icon-wrapper purple">
-            <Activity size={24} />
-          </div>
-          <div className="stat-info">
-            <h3>Temizlenen Veri Seti</h3>
-            <p className="stat-value">0</p>
-          </div>
-        </div>
-        <div className="stat-card glass-panel">
-          <div className="stat-icon-wrapper pink">
-            <Clock size={24} />
-          </div>
-          <div className="stat-info">
-            <h3>Kurtarılan Zaman</h3>
-            <p className="stat-value">0 Saat</p>
-          </div>
-        </div>
-      </section>
+      {error && (
+        <p className="status-msg error" style={{ marginBottom: '1rem' }}>{error}</p>
+      )}
 
-      <section className="dashboard-history">
-        <div className="history-header">
-          <h3>Geçmiş Analizler</h3>
-          <button className="text-btn highlight">Tümünü Gör <ChevronRight size={16}/></button>
-        </div>
-        
-        <div className="history-table-container glass-panel">
-          <table className="history-table">
-            <thead>
-              <tr>
-                <th>Dosya Adı</th>
-                <th>Tarih</th>
-                <th>Satır Sayısı</th>
-                <th>Durum</th>
-                <th>İşlem</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_HISTORY.length > 0 ? (
-                MOCK_HISTORY.map((item) => (
-                  <tr key={item.id}>
-                    <td className="file-name">
-                      <Database size={16} className="file-icon" />
-                      {item.name}
-                    </td>
-                    <td>{item.date}</td>
-                    <td>{item.rows.toLocaleString()}</td>
-                    <td>
-                      <span className={`status-badge ${item.status === 'Temizlendi' ? 'success' : 'warning'}`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td>
-                      {item.status === 'Temizlendi' ? (
-                        <button className="action-btn download">
-                          <Download size={16} /> İndir
-                        </button>
-                      ) : (
-                        <button className="action-btn continue">
-                          Devam Et
-                        </button>
+      <div className="dashboard-filters glass-panel">
+        <label htmlFor="dash-project-filter" className="filter-label">
+          Projeye göre filtrele
+        </label>
+        <select
+          id="dash-project-filter"
+          className="dashboard-project-select"
+          value={filterProjectId}
+          onChange={(e) => setFilterProjectId(e.target.value)}
+        >
+          <option value="">Tüm veri setleri</option>
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+      </div>
+
+      {filterProjectId && (
+        <section className="timeline-section glass-panel">
+          <div className="history-header">
+            <h3><History size={20} style={{ verticalAlign: 'text-bottom', marginRight: 8 }} />Proje zaman çizelgesi</h3>
+          </div>
+          {timelineLoading && <p className="dashboard-subtitle">Yükleniyor…</p>}
+          {timelineError && <p className="status-msg error">{timelineError}</p>}
+          {!timelineLoading && timeline && timeline.events.length === 0 && (
+            <p className="dashboard-subtitle">Bu projede henüz kayıtlı işlem yok.</p>
+          )}
+          {!timelineLoading && timeline && timeline.events.length > 0 && (
+            <ul className="timeline-list">
+              {timeline.events.map((ev, idx) => (
+                <li key={`${ev.type}-${ev.at}-${idx}`} className={`timeline-item timeline-${ev.type}`}>
+                  <span className="timeline-time">{formatDate(ev.at)}</span>
+                  {ev.type === 'operation' && (
+                    <span className="timeline-body">
+                      <strong>{ev.dataset_file || `#${ev.dataset_id}`}</strong>
+                      {' · '}{ev.module} / {ev.column} — <code>{ev.method}</code>
+                    </span>
+                  )}
+                  {ev.type === 'quality_report' && (
+                    <span className="timeline-body">
+                      <strong>{ev.dataset_file || `#${ev.dataset_id}`}</strong>
+                      {' · '}Kalite: eksik {ev.before_missing_pct}% → {ev.after_missing_pct}%
+                      {ev.id && (
+                        <span style={{ marginLeft: 12 }}>
+                          <button
+                            type="button"
+                            className="text-btn highlight"
+                            style={{ padding: '2px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            onClick={() => downloadQualityReport(ev.dataset_id, 'html', ev.id)}
+                          >
+                            <Download size={12} /> HTML Raporu
+                          </button>
+                          <button
+                            type="button"
+                            className="text-btn highlight"
+                            style={{ padding: '2px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: 4, marginLeft: 6 }}
+                            onClick={() => downloadQualityReport(ev.dataset_id, 'pdf', ev.id)}
+                          >
+                            <Download size={12} /> PDF Raporu
+                          </button>
+                        </span>
                       )}
-                    </td>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      {loading ? (
+        <p className="dashboard-subtitle">Yükleniyor…</p>
+      ) : (
+        <>
+          <section className="dashboard-stats">
+            <div className="stat-card glass-panel">
+              <div className="stat-icon-wrapper blue">
+                <Database size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>Toplam İşlenen Satır</h3>
+                <p className="stat-value">{stats.total_rows_processed.toLocaleString('tr-TR')}</p>
+              </div>
+            </div>
+            <div className="stat-card glass-panel">
+              <div className="stat-icon-wrapper purple">
+                <Activity size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>Listelenen Veri Seti</h3>
+                <p className="stat-value">{stats.dataset_count}</p>
+              </div>
+            </div>
+            <div className="stat-card glass-panel">
+              <div className="stat-icon-wrapper pink">
+                <Clock size={24} />
+              </div>
+              <div className="stat-info">
+                <h3>Temizlenmiş Çıktı</h3>
+                <p className="stat-value">{stats.cleaned_dataset_count}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="dashboard-history">
+            <div className="history-header">
+              <h3>Geçmiş Yüklemeler</h3>
+              <button type="button" className="text-btn highlight" onClick={load}>
+                <RefreshCw size={15} /> Yenile
+              </button>
+            </div>
+
+            <div className="history-table-container glass-panel">
+              <table className="history-table">
+                <thead>
+                  <tr>
+                    <th>Proje</th>
+                    <th>Dosya Adı</th>
+                    <th>Tarih</th>
+                    <th>Satır Sayısı</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
-                    Henüz hiçbir veri temizleme işlemi yapmadınız. Yeni bir dosya yükleyerek başlayabilirsiniz.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                </thead>
+                <tbody>
+                  {rows.length > 0 ? (
+                    rows.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.project_name || '—'}</td>
+                        <td className="file-name">
+                          <Database size={16} className="file-icon" />
+                          {item.original_filename}
+                        </td>
+                        <td>{formatDate(item.upload_time)}</td>
+                        <td>{item.row_count != null ? item.row_count.toLocaleString('tr-TR') : '—'}</td>
+                        <td>
+                          {(() => {
+                            const s = item.status;
+                            // Active states always win — even if a previous run left cleaned_ready=true
+                            if (s === 'processing')
+                              return <span className="status-badge info"><i />İşleniyor</span>;
+                            if (s === 'analyzing')
+                              return <span className="status-badge info"><i />Analiz ediliyor</span>;
+                            if (s === 'error')
+                              return <span className="status-badge danger"><i />Hata</span>;
+                            if (s === 'cleaned' || item.cleaned_ready)
+                              return <span className="status-badge success"><i />Temizlendi</span>;
+                            return <span className="status-badge warning"><i />Bekliyor</span>;
+                          })()}
+                        </td>
+                        <td className="dashboard-actions-cell">
+                          <button
+                            type="button"
+                            className="action-btn audit"
+                            onClick={() => onOpenDataset?.(item.id)}
+                          >
+                            <FileSearch size={16} /> İncele
+                          </button>
+                          {/* Show download only when current status is genuinely cleaned */}
+                          {(item.status === 'cleaned' || (item.cleaned_ready && item.status !== 'processing' && item.status !== 'analyzing' && item.status !== 'error')) && (
+                            <button type="button" className="action-btn download" onClick={() => handleDownload(item)}>
+                              <Download size={16} /> İndir
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="action-btn audit"
+                            onClick={() => handleAuditExport(item)}
+                            title="İşlem ve kalite günlüğünü CSV indir"
+                          >
+                            <FileSpreadsheet size={16} /> Denetim
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                        Bu filtrede veri seti yok. Ana sayfadan dosya yükleyin veya projeyi değiştirin.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 };

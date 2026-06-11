@@ -1,15 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertCircle, Download, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { CheckCircle, AlertCircle, Download, ChevronDown, ChevronRight, Check, BookmarkPlus, Wand2 } from 'lucide-react';
 import './AnalysisResults.css';
+import { downloadCleanedDataset, saveTemplate, applyTemplateToDataset, downloadQualityReport, getDatasetStatus } from '../services/api';
 
-const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
+const FORMAT_DEFAULTS = {
+  numeric_as_string: 'to_numeric',
+  date_as_string: 'to_datetime',
+  whitespace: 'strip_whitespace',
+  case_inconsistency: 'normalize_case',
+  fuzzy_duplicates: 'semantic_merge',
+};
+
+const CATEGORY_LABELS = {
+  missing: 'Eksik veri',
+  outlier: 'Aykırı değer',
+  format: 'Format',
+  feature: 'Özellik',
+};
+
+const AnalysisResults = ({
+  recommendations,
+  datasetId,
+  originalFilename,
+  onApply,
+  templates = [],
+  onTemplatesChanged,
+  initiallyOpen = false,
+  onApplied,
+}) => {
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(false);
   const [expandedIndex, setExpandedIndex] = useState(null);
-  const [showList, setShowList] = useState(false);
-  
+  const [showList, setShowList] = useState(initiallyOpen);
+  const [downloadError, setDownloadError] = useState('');
+  const [templateName, setTemplateName] = useState('');
+  const [templateMsg, setTemplateMsg] = useState('');
+  const [templateBusy, setTemplateBusy] = useState(false);
+  const [pickTemplateId, setPickTemplateId] = useState('');
+
   const [selectedIds, setSelectedIds] = useState([]);
   const [selectedMethods, setSelectedMethods] = useState({});
+
+  const downloadFilename = () => {
+    const base = originalFilename || `veri_${datasetId}`;
+    const stem = base.replace(/\.[^/.]+$/, '');
+    return `cleaned_${stem}.csv`;
+  };
+
+  const handleDownloadClick = async (e) => {
+    e.preventDefault();
+    setDownloadError('');
+    try {
+      await downloadCleanedDataset(datasetId, downloadFilename());
+    } catch (err) {
+      setDownloadError(err.message || 'İndirme başarısız');
+    }
+  };
+
+  const handleDownloadReportClick = async (e, format) => {
+    e.preventDefault();
+    setDownloadError('');
+    try {
+      await downloadQualityReport(datasetId, format);
+    } catch (err) {
+      setDownloadError(err.message || `${format.toUpperCase()} raporu indirme başarısız`);
+    }
+  };
 
   useEffect(() => {
     if (recommendations && recommendations.length > 0) {
@@ -18,14 +74,23 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
       recommendations.forEach(rec => {
         initialIds.push(rec.id);
         if (rec.options && rec.options.length > 0) {
-          // Varsayılan olarak 2. metodu seç (eğer varsa, ör: Log Dönüşümü), yoksa ilk metot
-          initialMethods[rec.id] = rec.options.length > 1 ? rec.options[1].id : rec.options[0].id;
+          const formatIssue = Object.keys(FORMAT_DEFAULTS).find((issue) => rec.id.endsWith(issue));
+          const preferredMethod = formatIssue ? FORMAT_DEFAULTS[formatIssue] : rec.options[0].id;
+          initialMethods[rec.id] = rec.options.some((option) => option.id === preferredMethod)
+            ? preferredMethod
+            : rec.options[0].id;
         }
       });
       setSelectedIds(initialIds);
       setSelectedMethods(initialMethods);
     }
   }, [recommendations]);
+
+  useEffect(() => {
+    setApplied(false);
+    setTemplateMsg('');
+    setPickTemplateId('');
+  }, [datasetId]);
 
   const toggleExpand = (i) => {
     setExpandedIndex(expandedIndex === i ? null : i);
@@ -47,22 +112,102 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
     }
   };
 
+  const buildSelections = () =>
+    recommendations
+      .filter((rec) => selectedIds.includes(rec.id))
+      .map((rec) => ({
+        category: rec.category,
+        column: rec.column,
+        method: selectedMethods[rec.id] || 'drop',
+      }));
+
+  const POLL_TIMEOUT_MS = 120_000; // 2 minutes
+
+  const pollCleanStatus = async (id) => {
+    return new Promise((resolve, reject) => {
+      const deadline = Date.now() + POLL_TIMEOUT_MS;
+      const interval = setInterval(async () => {
+        if (Date.now() > deadline) {
+          clearInterval(interval);
+          reject(new Error('İşlem zaman aşımına uğradı. Lütfen sayfayı yenileyerek durumu kontrol edin.'));
+          return;
+        }
+        try {
+          const statusRes = await getDatasetStatus(id);
+          if (statusRes.status === 'cleaned') {
+            clearInterval(interval);
+            resolve();
+          } else if (statusRes.status === 'error') {
+            clearInterval(interval);
+            reject(new Error('Temizleme işlemi sırasında hata oluştu.'));
+          }
+        } catch (err) {
+          clearInterval(interval);
+          reject(err);
+        }
+      }, 1500);
+    });
+  };
+
   const handleApply = async () => {
     setLoading(true);
+    setTemplateMsg('');
     try {
-      // Sadece seçili olanları filtrele ve gönder
-      const selections = recommendations
-        .filter(rec => selectedIds.includes(rec.id))
-        .map(rec => ({
-          category: rec.category,
-          column: rec.column,
-          method: selectedMethods[rec.id] || "drop"
-        }));
-      
-      await onApply(selections);
+      const res = await onApply(buildSelections());
+      if (res && res.status === 'processing') {
+        await pollCleanStatus(datasetId);
+      }
       setApplied(true);
+      onApplied?.();
     } catch (e) {
-      console.error(e);
+      setTemplateMsg(e.message || 'Uygulama başarısız');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    const name = templateName.trim();
+    if (!name) {
+      setTemplateMsg('Şablon adı girin.');
+      return;
+    }
+    const s = buildSelections();
+    if (s.length === 0) {
+      setTemplateMsg('En az bir işlem seçin.');
+      return;
+    }
+    setTemplateBusy(true);
+    setTemplateMsg('');
+    try {
+      await saveTemplate(name, s);
+      setTemplateName('');
+      setTemplateMsg('Şablon kaydedildi.');
+      onTemplatesChanged?.();
+    } catch (e) {
+      setTemplateMsg(e.message || 'Kayıt başarısız');
+    } finally {
+      setTemplateBusy(false);
+    }
+  };
+
+  const handleApplyTemplate = async () => {
+    const tid = Number(pickTemplateId);
+    if (!tid) {
+      setTemplateMsg('Önce bir şablon seçin.');
+      return;
+    }
+    setLoading(true);
+    setTemplateMsg('');
+    try {
+      const res = await applyTemplateToDataset(datasetId, tid);
+      if (res && res.status === 'processing') {
+        await pollCleanStatus(datasetId);
+      }
+      setApplied(true);
+      onApplied?.();
+    } catch (e) {
+      setTemplateMsg(e.message || 'Şablon uygulanamadı');
     } finally {
       setLoading(false);
     }
@@ -70,17 +215,29 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
 
   if (!recommendations || recommendations.length === 0) return null;
 
+  const categoryCount = recommendations.reduce((acc, recommendation) => {
+    acc[recommendation.category] = (acc[recommendation.category] || 0) + 1;
+    return acc;
+  }, {});
+
   if (!showList) {
     return (
       <section className="results-section">
-        <div className="summary-banner glass-panel">
-          <div className="summary-icon">🎉</div>
-          <h3 className="summary-title">Analiz Tamamlandı!</h3>
+        <div className="summary-banner">
+          <div className="summary-icon"><CheckCircle size={28} aria-hidden /></div>
+          <span className="summary-overline">Kalite profili hazır</span>
+          <h3 className="summary-title">Analiz tamamlandı</h3>
           <p className="summary-text">
-            Veri setiniz yapay zeka algoritmalarımızca tarandı ve toplam <strong>{recommendations.length} noktada</strong> düzeltme/geliştirme önerisi bulundu.
+            Veri setinizde incelenebilecek <strong>{recommendations.length} öneri</strong> bulundu.
+            Hiçbir işlem onayınız olmadan uygulanmayacak.
           </p>
-          <button className="btn-primary" onClick={() => setShowList(true)}>
-            Önerileri İncele ve Düzenle
+          <div className="summary-breakdown">
+            {Object.entries(categoryCount).map(([category, count]) => (
+              <span key={category}><b>{count}</b>{CATEGORY_LABELS[category] || category}</span>
+            ))}
+          </div>
+          <button type="button" className="btn-primary" onClick={() => setShowList(true)}>
+            Önerileri incele <ChevronRight size={17} aria-hidden />
           </button>
         </div>
       </section>
@@ -92,25 +249,59 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
   return (
     <section className="results-section fade-in">
       <div className="results-header-block">
-        <h3 className="section-heading" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-          Analiz <span className="glow-text">Önerileri</span>
+        <span className="results-overline">Karar ekranı</span>
+        <h3 className="section-heading">
+          Temizleme <span>önerileri</span>
         </h3>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-          Aşağıdaki listeden uygulamak istediğiniz işlemleri seçebilirsiniz.
+        <p>
+          Her problemi ayrı ayrı inceleyin, uygulanacak yöntemi karşılaştırın ve seçimlerinizi onaylayın.
         </p>
       </div>
 
       <div className="select-all-row glass-panel">
         <label className="checkbox-wrapper">
-          <input 
-            type="checkbox" 
-            checked={allSelected} 
-            onChange={handleSelectAll} 
+          <input
+            type="checkbox"
+            checked={allSelected}
+            onChange={handleSelectAll}
           />
           <div className="checkbox-custom"><Check size={14} className="check-icon" /></div>
           <span>Tümünü Seç / Seçimi Kaldır ({selectedIds.length}/{recommendations.length} seçili)</span>
         </label>
       </div>
+
+      {!applied && templates.length > 0 && (
+        <div className="template-quick glass-panel">
+          <Wand2 size={20} className="template-quick-icon" aria-hidden />
+          <div className="template-quick-body">
+            <strong>Kayıtlı şablon</strong>
+            <p className="template-quick-desc">Sütun adları dosyanızla eşleşen kurallar tek tıkla uygulanır.</p>
+            <div className="template-quick-actions">
+              <select
+                className="template-select"
+                value={pickTemplateId}
+                onChange={(e) => setPickTemplateId(e.target.value)}
+                aria-label="Şablon seç"
+              >
+                <option value="">— Şablon seçin —</option>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.selections_count ?? 0} kural)
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="btn-primary btn-template-apply"
+                onClick={handleApplyTemplate}
+                disabled={loading || !pickTemplateId}
+              >
+                Şablonu uygula
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="recommendations-list">
         {recommendations.map((rec, i) => {
@@ -118,14 +309,14 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
           const isSelected = selectedIds.includes(rec.id);
 
           return (
-            <div key={i} className={`rec-item glass-panel ${isExpanded ? 'expanded' : ''} ${!isSelected ? 'unselected' : ''}`}>
+            <div key={rec.id || i} className={`rec-item rec-${rec.category} ${isExpanded ? 'expanded' : ''} ${!isSelected ? 'unselected' : ''}`}>
               <div className="rec-header">
-                
+
                 <label className="checkbox-wrapper item-checkbox">
-                  <input 
-                    type="checkbox" 
-                    checked={isSelected} 
-                    onChange={(e) => handleSelectOne(rec.id, e.target.checked)} 
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => handleSelectOne(rec.id, e.target.checked)}
                   />
                   <div className="checkbox-custom"><Check size={14} className="check-icon" /></div>
                 </label>
@@ -134,10 +325,11 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
                   <AlertCircle size={18} className="rec-icon" />
                   <strong style={{ fontSize: '1.1rem', color: 'var(--text-primary)' }}>{rec.column}</strong>
                 </div>
-                
+
                 <div className="rec-actions">
-                  <span className="rec-type">{rec.category}</span>
-                  <button 
+                  <span className="rec-type">{CATEGORY_LABELS[rec.category] || rec.category}</span>
+                  <button
+                    type="button"
                     className={`btn-expand ${isExpanded ? 'active' : ''}`}
                     onClick={() => toggleExpand(i)}
                   >
@@ -146,11 +338,11 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
                   </button>
                 </div>
               </div>
-              
+
               {isExpanded && (
                 <div className="rec-details">
                   <p className="rec-desc">{rec.summary}</p>
-                  
+
                   {rec.options && rec.options.length > 0 && (
                     <div className="options-container">
                       <h5 className="options-title">Çözüm Yöntemi:</h5>
@@ -159,12 +351,12 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
                           const isOptionSelected = selectedMethods[rec.id] === opt.id;
                           return (
                             <label key={opt.id} className={`option-card ${isOptionSelected ? 'selected' : ''}`}>
-                              <input 
-                                type="radio" 
-                                name={`method-${rec.id}`} 
+                              <input
+                                type="radio"
+                                name={`method-${rec.id}`}
                                 value={opt.id}
                                 checked={isOptionSelected}
-                                onChange={() => setSelectedMethods({...selectedMethods, [rec.id]: opt.id})}
+                                onChange={() => setSelectedMethods({ ...selectedMethods, [rec.id]: opt.id })}
                               />
                               <div className="option-info">
                                 <div className="option-name-row">
@@ -189,8 +381,39 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
       </div>
 
       <div className="actions-row">
+        {!applied && (
+          <div className="save-template-row glass-panel">
+            <BookmarkPlus size={20} aria-hidden />
+            <div className="save-template-fields">
+              <span className="save-template-label">Seçimleri şablon olarak kaydet</span>
+              <div className="save-template-inputs">
+                <input
+                  type="text"
+                  className="template-name-input"
+                  placeholder="Örn: Aylık satış temizliği"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="btn-secondary-template"
+                  onClick={handleSaveTemplate}
+                  disabled={templateBusy || selectedIds.length === 0}
+                >
+                  {templateBusy ? 'Kaydediliyor…' : 'Kaydet'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {templateMsg && (
+          <p className={`template-feedback ${templateMsg.includes('başarı') || templateMsg.includes('kaydedildi') ? 'ok' : 'err'}`}>
+            {templateMsg}
+          </p>
+        )}
         {!applied ? (
           <button
+            type="button"
             className="btn-primary"
             onClick={handleApply}
             disabled={loading || selectedIds.length === 0}
@@ -198,19 +421,43 @@ const AnalysisResults = ({ recommendations, datasetId, onApply }) => {
             {loading ? 'Uygulanıyor...' : `Seçili Olanları Uygula (${selectedIds.length} İşlem)`}
           </button>
         ) : (
-          <div className="success-msg">
-            <CheckCircle size={24} />
-            <span>Tüm düzeltmeler uygulandı ve veri setiniz hazır!</span>
-            <a
-              href={`http://localhost:8000/download/${datasetId}`}
-              download={`temizlenmis_veri_${datasetId}.csv`}
-              className="btn-primary"
-              style={{ textDecoration: 'none', marginLeft: '16px', display: 'inline-flex', alignItems: 'center' }}
-            >
-              <Download size={18} style={{ marginRight: 8 }} />
-              Temiz Veriyi İndir
-            </a>
-          </div>
+          <>
+            <div className="success-msg">
+              <CheckCircle size={24} />
+              <span>Tüm düzeltmeler uygulandı ve veri setiniz hazır!</span>
+            </div>
+            <div className="download-actions-group">
+              <button
+                type="button"
+                className="btn-primary download-primary"
+                onClick={handleDownloadClick}
+              >
+                <Download size={18} style={{ marginRight: 8 }} />
+                Temiz Veriyi İndir (CSV)
+              </button>
+              <button
+                type="button"
+                className="btn-secondary-template download-secondary"
+                onClick={(e) => handleDownloadReportClick(e, 'html')}
+              >
+                <Download size={18} style={{ marginRight: 8 }} />
+                HTML Raporu İndir
+              </button>
+              <button
+                type="button"
+                className="btn-secondary-template download-secondary"
+                onClick={(e) => handleDownloadReportClick(e, 'pdf')}
+              >
+                <Download size={18} style={{ marginRight: 8 }} />
+                PDF Raporu İndir
+              </button>
+            </div>
+          </>
+        )}
+        {downloadError && (
+          <p className="status-msg error download-error">
+            {downloadError}
+          </p>
         )}
       </div>
     </section>

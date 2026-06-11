@@ -1,45 +1,126 @@
-import React from 'react';
-import { Sparkles, BarChart2, Zap } from 'lucide-react';
+import {
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  Database,
+  FileSpreadsheet,
+  Gauge,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import './Hero.css';
 
-const Hero = () => {
-  return (
-    <section className="hero-section text-center">
-      <div className="badge glass-panel" style={{ display: 'inline-flex', padding: '6px 12px', borderRadius: '20px', alignItems: 'center', gap: '8px', marginBottom: '2rem', fontSize: '0.85rem', fontWeight: '500' }}>
-        <Sparkles size={16} style={{ color: 'var(--accent-secondary)' }} />
-        <span style={{ color: 'var(--text-secondary)' }}>v2.0 FastAPI + React Mimarisi</span>
-      </div>
-      
-      <h2 className="hero-title" style={{ fontSize: '4rem', fontWeight: '800', lineHeight: '1.1', marginBottom: '1.5rem', color: 'var(--text-primary)' }}>
-        Yeni Nesil Yapay Zeka ile <br />
-        <span className="glow-text">Veri Temizliği ve Analizi</span>
-      </h2>
-      
-      <p className="hero-subtitle" style={{ fontSize: '1.15rem', color: 'var(--text-secondary)', maxWidth: '700px', margin: '0 auto 3rem auto', lineHeight: '1.6' }}>
-        Saatler süren veri temizleme işlerinizi dakikalara indirin. Excel veya CSV dosyanızı yükleyin; yapay zeka algoritmalarımız eksik verileri doldursun, anormallikleri tespit etsin ve verinizi modellemeye hazır hale getirsin.
-      </p>
+const QUALITY_ROWS = [
+  { label: 'Eksik değerler', value: 92, tone: 'emerald' },
+  { label: 'Format tutarlılığı', value: 78, tone: 'cyan' },
+  { label: 'Aykırı gözlemler', value: 71, tone: 'amber' },
+];
 
-      <div className="hero-stats glass-panel" style={{ display: 'inline-flex', gap: '3rem', padding: '24px 40px', borderRadius: '24px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-        <div className="stat-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}>
-          <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '12px', borderRadius: '14px', color: 'var(--accent-secondary)' }}>
-            <Zap size={28} />
+const Hero = ({ isLoggedIn, onStart, onOpenDashboard }) => {
+  return (
+    <section className="hero-section" aria-labelledby="hero-heading">
+      <div className="hero-copy">
+        <div className="hero-badge">
+          <Sparkles size={15} aria-hidden />
+          <span>Akıllı veri kalitesi ve karar destek sistemi</span>
+        </div>
+
+        <h2 id="hero-heading" className="hero-title">
+          Ham veriden
+          <span> güvenilir analize.</span>
+        </h2>
+
+        <p className="hero-lead">
+          Veri setinizi analiz edin, kalite sorunlarını görün, uygun temizleme
+          yöntemini seçin ve tüm dönüşümleri izlenebilir raporlarla yönetin.
+        </p>
+
+        <div className="hero-actions">
+          <button type="button" className="btn-primary hero-primary" onClick={onStart}>
+            {isLoggedIn ? 'Yeni analiz başlat' : 'Ücretsiz kullanmaya başla'}
+            <ArrowRight size={18} aria-hidden />
+          </button>
+          {isLoggedIn && (
+            <button type="button" className="hero-secondary" onClick={onOpenDashboard}>
+              Çalışma alanını aç
+            </button>
+          )}
+        </div>
+
+        <div className="hero-proof" aria-label="Desteklenen özellikler">
+          <span><CheckCircle2 size={16} /> CSV, XLSX ve TXT</span>
+          <span><CheckCircle2 size={16} /> Kullanıcı onaylı işlemler</span>
+          <span><CheckCircle2 size={16} /> PDF ve HTML rapor</span>
+        </div>
+      </div>
+
+      <div className="hero-visual" aria-label="Örnek veri kalite kokpiti">
+        <div className="cockpit-shell">
+          <div className="cockpit-topbar">
+            <div className="cockpit-file">
+              <span className="cockpit-file-icon"><FileSpreadsheet size={18} /></span>
+              <div>
+                <strong>sales_dataset.csv</strong>
+                <small>12.480 satır · 18 sütun</small>
+              </div>
+            </div>
+            <span className="cockpit-live"><i /> ÖRNEK KALİTE GÖRÜNÜMÜ</span>
           </div>
-          <div>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Şimşek Hızında</h4>
-            <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Milyonlarca satırı saniyeler içinde işleyin</p>
+
+          <div className="cockpit-grid">
+            <div className="quality-score-card">
+              <div className="quality-score-head">
+                <span>Veri kalite skoru</span>
+                <Gauge size={18} aria-hidden />
+              </div>
+              <div className="quality-score-body">
+                <div className="score-ring">
+                  <strong>84</strong>
+                  <small>/100</small>
+                </div>
+                <div>
+                  <span className="score-trend">+19 puan potansiyel</span>
+                  <p>Önerilen 7 işlem incelenmeye hazır.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="quality-bars-card">
+              <span className="cockpit-label">Kalite boyutları</span>
+              {QUALITY_ROWS.map((row) => (
+                <div className="quality-row" key={row.label}>
+                  <div className="quality-row-meta">
+                    <span>{row.label}</span>
+                    <strong>{row.value}%</strong>
+                  </div>
+                  <div className="quality-track">
+                    <span className={`quality-fill ${row.tone}`} style={{ width: `${row.value}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pipeline-card">
+              <div className="pipeline-head">
+                <span className="cockpit-label">Öneri motoru</span>
+                <BarChart3 size={17} aria-hidden />
+              </div>
+              <div className="pipeline-list">
+                <div><i className="pipeline-dot emerald" /><span>MICE ile eksik değer tahmini</span><b>3</b></div>
+                <div><i className="pipeline-dot cyan" /><span>Format standardizasyonu</span><b>2</b></div>
+                <div><i className="pipeline-dot amber" /><span>Aykırı değer incelemesi</span><b>2</b></div>
+              </div>
+            </div>
           </div>
         </div>
-        
-        <div className="stat-divider" style={{ width: '1px', height: '50px', background: 'var(--glass-border)' }}></div>
-        
-        <div className="stat-item" style={{ display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}>
-          <div style={{ background: 'rgba(126, 46, 255, 0.1)', padding: '12px', borderRadius: '14px', color: 'var(--accent-primary)' }}>
-            <BarChart2 size={28} />
-          </div>
-          <div>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>Akıllı Analitik</h4>
-            <p style={{ margin: '0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>DBSCAN & Isolation Forest ile anormallik tespiti</p>
-          </div>
+
+        <div className="floating-security">
+          <ShieldCheck size={19} aria-hidden />
+          <div><strong>İzlenebilir işlem</strong><span>Her değişiklik kayıt altında</span></div>
+        </div>
+        <div className="floating-dataset">
+          <Database size={18} aria-hidden />
+          <span>CSV çıktı + kalite raporu</span>
         </div>
       </div>
     </section>

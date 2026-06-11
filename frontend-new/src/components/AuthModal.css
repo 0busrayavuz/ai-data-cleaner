@@ -89,7 +89,7 @@
 
 .glow-icon {
   color: var(--accent-primary);
-  filter: drop-shadow(0 0 10px rgba(126, 46, 255, 0.5));
+  filter: drop-shadow(0 0 10px rgba(12, 143, 114, 0.25));
 }
 
 .auth-form {
@@ -118,7 +118,7 @@
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 1rem;
   transition: all 0.3s ease;
 }
@@ -126,13 +126,141 @@
 .auth-input:focus {
   outline: none;
   background: rgba(255, 255, 255, 1);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(12, 143, 114, 0.13);
+}
+
+.input-group:focus-within .input-icon {
+  color: var(--accent-primary);
+}
+
+.input-group.has-error .auth-input {
+  border-color: rgba(239, 68, 68, 0.65);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+.input-group.has-error:focus-within .auth-input {
   border-color: var(--accent-secondary);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
-.auth-input:focus + .input-icon, 
-.auth-input:not(:placeholder-shown) + .input-icon {
+.field-error {
+  font-size: 0.8rem;
+  color: #dc2626;
+  margin: -6px 0 0 4px;
+  line-height: 1.35;
+}
+
+.input-group-password .auth-input {
+  padding-right: 52px;
+}
+
+.input-suffix-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.input-suffix-btn:hover {
   color: var(--accent-secondary);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.remember-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: -4px 0 0;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin: -8px 0 4px 4px;
+  line-height: 1.4;
+}
+
+.password-strength {
+  margin: 4px 0 8px 4px;
+}
+
+.password-strength-track {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.password-strength-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.08);
+  transition: background 0.25s ease;
+}
+
+.password-strength-seg.strength-1 {
+  background: linear-gradient(90deg, #f87171, #fb923c);
+}
+
+.password-strength-seg.strength-2 {
+  background: linear-gradient(90deg, #fbbf24, #a3e635);
+}
+
+.password-strength-seg.strength-3 {
+  background: linear-gradient(90deg, #4ade80, #22d3ee);
+}
+
+.password-strength-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.terms-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 4px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  user-select: none;
+}
+
+.terms-row input {
+  margin-top: 3px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-secondary);
+}
+
+.terms-row.has-error .terms-text {
+  color: #b91c1c;
+}
+
+.terms-em {
+  color: var(--accent-secondary);
+  font-weight: 600;
+}
+
+.terms-error {
+  margin-top: 4px;
 }
 
 .auth-options {
@@ -163,8 +291,8 @@
   transition: color 0.2s ease;
 }
 
-.text-btn:hover {
-  color: white;
+.auth-modal .text-btn:hover {
+  color: var(--text-primary);
   text-decoration: underline;
 }
 

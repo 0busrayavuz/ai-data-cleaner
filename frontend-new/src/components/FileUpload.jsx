@@ -1,85 +1,215 @@
-import React, { useCallback, useState } from 'react';
-import { UploadCloud, FileType, CheckCircle } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import {
+  CheckCircle2,
+  FileSpreadsheet,
+  FolderKanban,
+  Lock,
+  Plus,
+  ShieldCheck,
+  UploadCloud,
+} from 'lucide-react';
 import './FileUpload.css';
 
-const FileUpload = ({ onFileSelect }) => {
+const FileUpload = ({
+  onFileSelect,
+  canUpload = true,
+  onNeedAuth,
+  projects = [],
+  selectedProjectId = null,
+  onProjectChange,
+  onCreateProject,
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState(null);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [creatingProject, setCreatingProject] = useState(false);
 
-  const handleDrag = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setIsDragging(true);
-    } else if (e.type === 'dragleave') {
-      setIsDragging(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const selectedFile = e.dataTransfer.files[0];
-      setFile(selectedFile);
-      if (onFileSelect) onFileSelect(selectedFile);
-    }
+  const acceptFile = useCallback((selectedFile) => {
+    setFile(selectedFile);
+    onFileSelect?.(selectedFile);
   }, [onFileSelect]);
 
-  const handleChange = (e) => {
-    e.preventDefault();
-    if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      setFile(selectedFile);
-      if (onFileSelect) onFileSelect(selectedFile);
+  const handleDrag = useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(event.type === 'dragenter' || event.type === 'dragover');
+  }, []);
+
+  const handleDrop = useCallback((event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+
+    if (!canUpload) {
+      onNeedAuth?.();
+      return;
+    }
+
+    const selectedFile = event.dataTransfer.files?.[0];
+    if (selectedFile) acceptFile(selectedFile);
+  }, [acceptFile, canUpload, onNeedAuth]);
+
+  const handleChange = (event) => {
+    if (!canUpload) {
+      event.target.value = '';
+      onNeedAuth?.();
+      return;
+    }
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) acceptFile(selectedFile);
+  };
+
+  const handleCreateProject = async () => {
+    const name = newProjectName.trim();
+    if (!name || !onCreateProject) return;
+    setCreatingProject(true);
+    try {
+      await onCreateProject(name);
+      setNewProjectName('');
+    } finally {
+      setCreatingProject(false);
     }
   };
 
   return (
-    <div className="upload-container">
-      <div 
-        className={`dropzone glass-panel ${isDragging ? 'drag-active' : ''} ${file ? 'has-file' : ''}`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input 
-          type="file" 
-          id="file-upload" 
-          className="file-input" 
-          onChange={handleChange} 
-          accept=".csv,.xlsx,.xls"
-        />
-        <label htmlFor="file-upload" className="dropzone-label">
-          {!file ? (
+    <section id="upload-workspace" className="upload-section" aria-labelledby="upload-heading">
+      <div className="upload-heading-row">
+        <div>
+          <span className="upload-overline">Yeni çalışma</span>
+          <h3 id="upload-heading">Veri setinizi analiz alanına alın.</h3>
+        </div>
+        <p>
+          Dosyanız önce okunabilirlik ve yapı kontrolünden geçer. Analiz sonucunda
+          hiçbir değişiklik kullanıcı onayı olmadan uygulanmaz.
+        </p>
+      </div>
+
+      <div className="upload-workspace">
+        <aside className="upload-sidebar">
+          <div className="upload-sidebar-head">
+            <span className="upload-sidebar-icon"><FolderKanban size={20} /></span>
+            <div>
+              <strong>Çalışma bağlamı</strong>
+              <small>Dosyanızı bir proje altında gruplayın.</small>
+            </div>
+          </div>
+
+          {canUpload ? (
             <>
-              <div className="icon-pulse">
-                <UploadCloud size={64} className="upload-icon floating-icon" />
+              <label className="upload-field-label" htmlFor="upload-project-select">Proje</label>
+              <select
+                id="upload-project-select"
+                className="project-select"
+                value={selectedProjectId ?? ''}
+                onChange={(event) => onProjectChange?.(
+                  event.target.value === '' ? null : Number(event.target.value)
+                )}
+              >
+                <option value="">Bağımsız veri seti</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>{project.name}</option>
+                ))}
+              </select>
+
+              <div className="project-create-block">
+                <label className="upload-field-label" htmlFor="new-project-name">Yeni proje</label>
+                <div className="project-new-row">
+                  <input
+                    id="new-project-name"
+                    type="text"
+                    className="project-new-input"
+                    placeholder="Örn. Satış verileri"
+                    value={newProjectName}
+                    onChange={(event) => setNewProjectName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleCreateProject();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="btn-project-create"
+                    onClick={handleCreateProject}
+                    disabled={creatingProject || !newProjectName.trim() || !onCreateProject}
+                    aria-label="Yeni proje oluştur"
+                  >
+                    <Plus size={18} aria-hidden />
+                  </button>
+                </div>
               </div>
-              <h3 style={{ fontSize: '1.8rem', fontWeight: '700', marginBottom: '16px', color: 'var(--text-primary)' }}>
-                Yüklenecek Dosyayı Sürükleyin
-              </h3>
-              <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-                CSV veya Excel formatları desteklenir (Maksimum 500MB)
-              </p>
-              <div className="btn-primary" style={{ padding: '16px 36px', fontSize: '1.1rem' }}>Dosya Seçin</div>
             </>
           ) : (
-            <>
-              <CheckCircle size={64} className="success-icon floating-icon" />
-              <div className="file-info" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                <FileType size={24} className="file-type-icon" />
-                <span className="file-name" style={{ color: '#064e3b', fontWeight: '600' }}>{file.name}</span>
-              </div>
-              <p className="file-size" style={{ color: '#047857', fontWeight: '500', fontSize: '1rem' }}>{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-            </>
+            <button type="button" className="upload-login-card" onClick={onNeedAuth}>
+              <Lock size={18} aria-hidden />
+              <span><strong>Giriş yapmanız gerekiyor</strong><small>Dosya ve raporlar hesabınıza bağlanır.</small></span>
+            </button>
           )}
-        </label>
+
+          <div className="upload-security-note">
+            <ShieldCheck size={17} aria-hidden />
+            <span>İşlem geçmişi ve dosya sahipliği korunur.</span>
+          </div>
+        </aside>
+
+        <div
+          className={`dropzone ${isDragging ? 'drag-active' : ''} ${file ? 'has-file' : ''} ${!canUpload ? 'dropzone-disabled' : ''}`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            id="file-upload"
+            className="file-input"
+            onChange={handleChange}
+            accept=".csv,.xlsx,.txt"
+            disabled={!canUpload}
+          />
+          <label
+            htmlFor={canUpload ? 'file-upload' : undefined}
+            className="dropzone-label"
+            onClick={(event) => {
+              if (!canUpload) {
+                event.preventDefault();
+                onNeedAuth?.();
+              }
+            }}
+            onKeyDown={(event) => {
+              if (!canUpload && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                onNeedAuth?.();
+              }
+            }}
+            role={canUpload ? undefined : 'button'}
+            tabIndex={canUpload ? undefined : 0}
+          >
+            {!file ? (
+              <>
+                <span className="dropzone-icon"><UploadCloud size={34} aria-hidden /></span>
+                <span className="dropzone-kicker">Dosya yükleme</span>
+                <h4>Dosyayı buraya bırakın</h4>
+                <p>veya bilgisayarınızdan seçmek için tıklayın</p>
+                <span className="dropzone-button">{canUpload ? 'Dosya seç' : 'Giriş yap'}</span>
+                <div className="file-constraints">
+                  <span>CSV</span><span>XLSX</span><span>TXT</span><small>Maks. 20 MB</small>
+                </div>
+              </>
+            ) : (
+              <div className="selected-file">
+                <span className="selected-file-status"><CheckCircle2 size={19} /> Dosya alındı</span>
+                <span className="selected-file-icon"><FileSpreadsheet size={36} /></span>
+                <h4>{file.name}</h4>
+                <p>{(file.size / (1024 * 1024)).toFixed(2)} MB · Analiz için hazırlanıyor</p>
+                <span className="change-file-hint">Farklı dosya seçmek için tıklayın</span>
+              </div>
+            )}
+          </label>
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 

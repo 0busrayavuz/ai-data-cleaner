@@ -1,67 +1,182 @@
 .analysis-section {
-  padding: 60px 0;
+  padding: clamp(36px, 7vw, 82px) 0;
 }
 
-.section-heading {
-  text-align: center;
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 40px;
-  letter-spacing: -0.5px;
-}
-
-.cards-grid {
+.analysis-intro {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 24px;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: end;
+  gap: 2.5rem;
+  margin-bottom: 32px;
 }
 
-.tilt-card {
-  padding: 28px;
+.analysis-overline {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent-secondary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.analysis-intro h3 {
+  max-width: 700px;
+  margin: 14px 0 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.07;
+  letter-spacing: -0.045em;
+}
+
+.analysis-intro > p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.method-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.method-card {
+  min-height: 310px;
+  padding: 23px;
   position: relative;
   overflow: hidden;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-  cursor: default;
-  border-top: 1px solid var(--card-accent, var(--glass-border));
+  border: 1px solid rgba(16, 41, 35, 0.09);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.28s var(--ease-out), box-shadow 0.28s var(--ease-out);
 }
 
-.card-glow {
+.method-card::before {
+  content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  opacity: 0.8;
-  transition: opacity 0.3s ease;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--method-color);
 }
 
-.tilt-card:hover .card-glow {
-  opacity: 1;
-  box-shadow: 0 0 12px 2px var(--card-accent);
+.method-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
 }
 
-.card-icon-wrap {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--glass-border);
+.method-card--emerald { --method-color: #0c8f72; --method-soft: rgba(12, 143, 114, 0.09); }
+.method-card--cyan { --method-color: #177f9c; --method-soft: rgba(23, 127, 156, 0.09); }
+.method-card--amber { --method-color: #c98a22; --method-soft: rgba(201, 138, 34, 0.1); }
+.method-card--violet { --method-color: #6f67a8; --method-soft: rgba(111, 103, 168, 0.09); }
+
+.method-card-top {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  margin-bottom: 20px;
+  justify-content: space-between;
+  margin-bottom: 30px;
 }
 
-.card-title {
+.method-icon {
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--method-color);
+  background: var(--method-soft);
+}
+
+.method-eyebrow {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.method-card h4 {
+  margin: 0 0 11px;
+  color: var(--text-primary);
   font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0 0 12px;
 }
 
-.card-desc {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.6;
+.method-card p {
+  min-height: 88px;
   margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.method-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 22px;
+}
+
+.method-tags span {
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  background: var(--surface-soft);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.analysis-note {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 14px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  color: #9de1cf;
+  background: var(--surface-dark);
+}
+
+.analysis-note strong,
+.analysis-note span {
+  display: block;
+}
+
+.analysis-note strong {
+  color: white;
+  font-size: 0.88rem;
+}
+
+.analysis-note span {
+  margin-top: 3px;
+  color: #9fb7b0;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 1000px) {
+  .method-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .analysis-intro {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .method-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .method-card {
+    min-height: auto;
+  }
+
+  .method-card p {
+    min-height: 0;
+  }
 }
