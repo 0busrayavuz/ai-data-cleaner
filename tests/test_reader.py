@@ -1,26 +1,32 @@
+import os
 import pandas as pd
 from backend.modules.file_reader import read_file, get_basic_profile
 
-# Test CSV oluştur
-test_path = 'uploads/test.csv'
-pd.DataFrame({
-    'isim': ['Ali', 'Ayse', None, 'Mehmet'],
-    'yas': [25, None, 30, 22],
-    'gelir': [5000, 8000, None, 4500]
-}).to_csv(test_path, index=False)
+def test_file_reader(tmp_path):
+    test_path = os.path.join(tmp_path, "test.csv")
+    pd.DataFrame({
+        'isim': ['Ali', 'Ayse', None, 'Mehmet'],
+        'yas': [25, None, 30, 22],
+        'gelir': [5000, 8000, None, 4500]
+    }).to_csv(test_path, index=False)
 
-df, meta = read_file(test_path)
-print('=== META BİLGİ ===')
-print(f'Dosya: {meta["filename"]}')
-print(f'Format: {meta["format"]}')
-print(f'Satır: {meta["row_count"]}, Sütun: {meta["col_count"]}')
-print(f'Sütunlar: {meta["columns"]}')
+    df, meta = read_file(test_path)
+    assert meta["row_count"] == 4
+    assert meta["col_count"] == 3
+    assert "isim" in meta["columns"]
 
-print()
-print('=== EKSİK DEĞER PROFİLİ ===')
-profile = get_basic_profile(df)
-for col, info in profile.items():
-    print(f'{col}: eksik={info["missing_count"]} (%{info["missing_pct"]})')
+    profile = get_basic_profile(df)
+    assert profile["isim"]["missing_count"] == 1
+    assert profile["yas"]["missing_count"] == 1
 
-print()
-print('=== BAŞARILI ===')
+def test_bad_csv_lines(tmp_path):
+    # Create a malformed CSV file
+    bad_csv_path = os.path.join(tmp_path, "bad.csv")
+    with open(bad_csv_path, "w", encoding="utf-8") as f:
+        f.write("col1,col2\n")
+        f.write("val1,val2\n")
+        f.write("val3,val4,val5\n")  # extra column value (bad line)
+
+    import pytest
+    with pytest.raises(ValueError, match="geçersiz/bozuk satır"):
+        read_file(bad_csv_path)
