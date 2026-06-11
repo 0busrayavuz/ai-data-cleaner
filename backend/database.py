@@ -1,77 +1,329 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text, ForeignKey, inspect, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 import os
 
-# SQLite veya PostgreSQL URL'si (Docker üzerinden otomatik alınır)
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./cleaner_dev.db")
 
-# check_same_thread parametresi sadece SQLite için geçerlidir
 connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 
-# ── TABLO 1: Yüklenen veri setleri ──
+class Project(Base):
+    __tablename__ = "projects"
+
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    user_id     = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name        = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    created_at  = Column(DateTime, default=datetime.utcnow)
+
+
 class Dataset(Base):
     __tablename__ = "datasets"
 
-    id          = Column(Integer, primary_key=True, autoincrement=True)
-    filename    = Column(String, nullable=False)
-    format      = Column(String, nullable=False)   # csv / txt / xlsx
-    row_count   = Column(Integer)
-    col_count   = Column(Integer)
-    file_path   = Column(String)
-    upload_time = Column(DateTime, default=datetime.now)
+    id                = Column(Integer, primary_key=True, autoincrement=True)
+    user_id           = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    project_id        = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True)
+    filename          = Column(String, nullable=False)
+    original_filename = Column(String, nullable=True)
+    format            = Column(String, nullable=False)
+    row_count         = Column(Integer)
+    col_count         = Column(Integer)
+    file_path         = Column(String)
+    status            = Column(String, default="ready", nullable=False)
+    upload_time       = Column(DateTime, default=datetime.utcnow)
 
-
-# ── TABLO 2: İşlem günlüğü ──
 class CleaningLog(Base):
     __tablename__ = "cleaning_logs"
 
     id          = Column(Integer, primary_key=True, autoincrement=True)
-    dataset_id  = Column(Integer)
-    module      = Column(String)    # missing_value / outlier / format
+    dataset_id  = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False)
+    user_id     = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    module      = Column(String)
     column_name = Column(String)
-    method      = Column(String)    # KNNImputer, mean, drop vb.
-    details     = Column(Text)      # JSON string olarak ek bilgi
-    applied_at  = Column(DateTime, default=datetime.now)
+    method      = Column(String)
+    details     = Column(Text)
+    applied_at  = Column(DateTime, default=datetime.utcnow)
 
 
-# ── TABLO 3: Kalite raporları ──
 class QualityReport(Base):
     __tablename__ = "quality_reports"
 
     id             = Column(Integer, primary_key=True, autoincrement=True)
-    dataset_id     = Column(Integer)
-    before_missing = Column(Float)   # Temizlik öncesi eksik %
-    after_missing  = Column(Float)   # Temizlik sonrası eksik %
+    dataset_id     = Column(Integer, ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False)
+    before_missing = Column(Float)
+    after_missing  = Column(Float)
     outlier_count  = Column(Integer)
     format_errors  = Column(Integer)
     report_path    = Column(String)
-    created_at     = Column(DateTime, default=datetime.now)
+    created_at     = Column(DateTime, default=datetime.utcnow)
 
 
-# ── TABLO 4: Kullanıcılar ──
+class CleaningTemplate(Base):
+    __tablename__ = "cleaning_templates"
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    user_id         = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name            = Column(String, nullable=False)
+    selections_json = Column(Text, nullable=False)
+    created_at      = Column(DateTime, default=datetime.utcnow)
+
+
 class User(Base):
     __tablename__ = "users"
 
     id              = Column(Integer, primary_key=True, autoincrement=True)
     email           = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    created_at      = Column(DateTime, default=datetime.now)
+    created_at      = Column(DateTime, default=datetime.utcnow)
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id         = Column(Integer, primary_key=True, autoincrement=True)
+    user_id    = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token      = Column(String(128), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+def run_light_migrations():
+    is_sqlite = SQLALCHEMY_DATABASE_URL.startswith("sqlite")
+
+    # 1. Update datasets columns
+    try:
+        inspector = inspect(engine)
+        if inspector.has_table("datasets"):
+            cols = {c["name"] for c in inspector.get_columns("datasets")}
+            to_add_user_id = "user_id" not in cols
+            to_add_orig_fn = "original_filename" not in cols
+            to_add_proj_id = "project_id" not in cols
+            to_add_status = "status" not in cols
+
+            if to_add_user_id or to_add_orig_fn or to_add_proj_id or to_add_status:
+                with engine.begin() as conn:
+                    if to_add_user_id:
+                        if is_sqlite:
+                            conn.execute(text("ALTER TABLE datasets ADD COLUMN user_id INTEGER"))
+                        else:
+                            conn.execute(text("ALTER TABLE datasets ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE"))
+                    if to_add_orig_fn:
+                        conn.execute(text("ALTER TABLE datasets ADD COLUMN original_filename VARCHAR"))
+                        conn.execute(text("UPDATE datasets SET original_filename = filename WHERE original_filename IS NULL"))
+                    if to_add_proj_id:
+                        conn.execute(text("ALTER TABLE datasets ADD COLUMN project_id INTEGER"))
+                    if to_add_status:
+                        conn.execute(text("ALTER TABLE datasets ADD COLUMN status VARCHAR DEFAULT 'ready'"))
+    except Exception as e:
+        print(f"[Migration Warning] Failed to update datasets columns: {e}")
+
+    # 2. Update cleaning_logs columns
+    try:
+        inspector = inspect(engine)
+        if inspector.has_table("cleaning_logs"):
+            log_cols = {c["name"] for c in inspector.get_columns("cleaning_logs")}
+            if "user_id" not in log_cols:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE cleaning_logs ADD COLUMN user_id INTEGER"))
+    except Exception as e:
+        print(f"[Migration Warning] Failed to update cleaning_logs columns: {e}")
+
+    # Add constraints on PostgreSQL if they don't exist
+    if not is_sqlite:
+        # ── datasets.user_id FK ──────────────────────────────────────────
+        try:
+            inspector = inspect(engine)
+            if inspector.has_table("datasets") and inspector.has_table("users"):
+                fks = inspector.get_foreign_keys("datasets")
+                has_user_fk = any(
+                    fk["referred_table"] == "users" and "user_id" in fk["constrained_columns"]
+                    for fk in fks
+                )
+                if not has_user_fk:
+                    with engine.begin() as conn:
+                        # Only set user_id to NULL for rows whose user_id is set but points to a
+                        # non-existent user. NULL rows are handled separately below.
+                        conn.execute(text(
+                            "UPDATE datasets SET user_id = NULL "
+                            "WHERE user_id IS NOT NULL "
+                            "  AND user_id NOT IN (SELECT id FROM users)"
+                        ))
+                        conn.execute(text(
+                            "ALTER TABLE datasets "
+                            "ADD CONSTRAINT fk_datasets_user "
+                            "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+                        ))
+        except Exception as e:
+            print(f"[Migration Warning] Failed to add datasets user FK: {e}")
+
+        # ── cleaning_logs dataset FK ─────────────────────────────────────
+        try:
+            inspector = inspect(engine)
+            if inspector.has_table("cleaning_logs") and inspector.has_table("datasets"):
+                fks = inspector.get_foreign_keys("cleaning_logs")
+                has_dataset_fk = any(
+                    fk["referred_table"] == "datasets" and "dataset_id" in fk["constrained_columns"]
+                    for fk in fks
+                )
+                if not has_dataset_fk:
+                    with engine.begin() as conn:
+                        conn.execute(text(
+                            "DELETE FROM cleaning_logs "
+                            "WHERE dataset_id IS NOT NULL "
+                            "  AND dataset_id NOT IN (SELECT id FROM datasets)"
+                        ))
+                        conn.execute(text(
+                            "ALTER TABLE cleaning_logs "
+                            "ADD CONSTRAINT fk_cleaning_logs_dataset "
+                            "FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE CASCADE"
+                        ))
+        except Exception as e:
+            print(f"[Migration Warning] Failed to add cleaning_logs dataset FK: {e}")
+
+        # ── cleaning_logs user FK ────────────────────────────────────────
+        try:
+            inspector = inspect(engine)
+            if inspector.has_table("cleaning_logs") and inspector.has_table("users"):
+                fks = inspector.get_foreign_keys("cleaning_logs")
+                has_user_fk = any(
+                    fk["referred_table"] == "users" and "user_id" in fk["constrained_columns"]
+                    for fk in fks
+                )
+                if not has_user_fk:
+                    with engine.begin() as conn:
+                        conn.execute(text(
+                            "UPDATE cleaning_logs SET user_id = NULL "
+                            "WHERE user_id IS NOT NULL "
+                            "  AND user_id NOT IN (SELECT id FROM users)"
+                        ))
+                        conn.execute(text(
+                            "ALTER TABLE cleaning_logs "
+                            "ADD CONSTRAINT fk_cleaning_logs_user "
+                            "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+                        ))
+        except Exception as e:
+            print(f"[Migration Warning] Failed to add cleaning_logs user FK: {e}")
+
+        # ── quality_reports.dataset_id FK ────────────────────────────────
+        try:
+            inspector = inspect(engine)
+            if inspector.has_table("quality_reports") and inspector.has_table("datasets"):
+                fks = inspector.get_foreign_keys("quality_reports")
+                has_dataset_fk = any(
+                    fk["referred_table"] == "datasets" and "dataset_id" in fk["constrained_columns"]
+                    for fk in fks
+                )
+                if not has_dataset_fk:
+                    with engine.begin() as conn:
+                        conn.execute(text(
+                            "DELETE FROM quality_reports "
+                            "WHERE dataset_id IS NOT NULL "
+                            "  AND dataset_id NOT IN (SELECT id FROM datasets)"
+                        ))
+                        conn.execute(text(
+                            "ALTER TABLE quality_reports "
+                            "ADD CONSTRAINT fk_quality_reports_dataset "
+                            "FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE CASCADE"
+                        ))
+        except Exception as e:
+            print(f"[Migration Warning] Failed to add quality_reports dataset FK: {e}")
+
+        # ── NOT NULL enforcement — user_id ────────────────────────────────
+        def _enforce_not_null_user_id(table: str, col_dict: dict) -> None:
+            if col_dict.get("nullable", True):
+                try:
+                    with engine.begin() as conn:
+                        null_count = conn.execute(
+                            text(f"SELECT COUNT(*) FROM {table} WHERE user_id IS NULL")
+                        ).scalar()
+                        if null_count > 0:
+                            user_count = conn.execute(
+                                text("SELECT COUNT(*) FROM users")
+                            ).scalar()
+                            if user_count == 1:
+                                # Safe: assign orphan rows to the only user
+                                conn.execute(text(
+                                    f"UPDATE {table} SET user_id = (SELECT id FROM users LIMIT 1) "
+                                    f"WHERE user_id IS NULL"
+                                ))
+                                print(
+                                    f"[Migration] Assigned {null_count} NULL-user_id row(s) in "
+                                    f"'{table}' to the only existing user."
+                                )
+                            else:
+                                print(
+                                    f"[Migration WARNING] '{table}' has {null_count} row(s) with "
+                                    f"NULL user_id and {user_count} users exist — cannot determine "
+                                    f"ownership automatically.  NOT NULL constraint NOT applied. "
+                                    f"Resolve manually: UPDATE {table} SET user_id = <id> WHERE user_id IS NULL;"
+                                )
+                                return  # Skip NOT NULL — would break data
+                        conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN user_id SET NOT NULL"))
+                except Exception as e:
+                    print(f"[Migration Warning] Failed to set {table}.user_id NOT NULL: {e}")
+
+        try:
+            inspector = inspect(engine)
+            if inspector.has_table("datasets"):
+                d_cols = {c["name"]: c for c in inspector.get_columns("datasets")}
+                if "user_id" in d_cols:
+                    _enforce_not_null_user_id("datasets", d_cols["user_id"])
+        except Exception as e:
+            print(f"[Migration Warning] datasets NOT NULL check failed: {e}")
+
+        try:
+            inspector = inspect(engine)
+            if inspector.has_table("cleaning_logs"):
+                l_cols = {c["name"]: c for c in inspector.get_columns("cleaning_logs")}
+                if "user_id" in l_cols:
+                    _enforce_not_null_user_id("cleaning_logs", l_cols["user_id"])
+        except Exception as e:
+            print(f"[Migration Warning] cleaning_logs NOT NULL check failed: {e}")
+
+        # ── NOT NULL enforcement — dataset_id (cleaning_logs) ────────────
+        try:
+            inspector = inspect(engine)
+            if inspector.has_table("cleaning_logs"):
+                l_cols = {c["name"]: c for c in inspector.get_columns("cleaning_logs")}
+                if "dataset_id" in l_cols and l_cols["dataset_id"].get("nullable", True):
+                    with engine.begin() as conn:
+                        conn.execute(text("DELETE FROM cleaning_logs WHERE dataset_id IS NULL"))
+                        conn.execute(text(
+                            "ALTER TABLE cleaning_logs ALTER COLUMN dataset_id SET NOT NULL"
+                        ))
+        except Exception as e:
+            print(f"[Migration Warning] Failed to set cleaning_logs.dataset_id NOT NULL: {e}")
+
+        # ── NOT NULL enforcement — dataset_id (quality_reports) ──────────
+        try:
+            inspector = inspect(engine)
+            if inspector.has_table("quality_reports"):
+                r_cols = {c["name"]: c for c in inspector.get_columns("quality_reports")}
+                if "dataset_id" in r_cols and r_cols["dataset_id"].get("nullable", True):
+                    with engine.begin() as conn:
+                        conn.execute(text("DELETE FROM quality_reports WHERE dataset_id IS NULL"))
+                        conn.execute(text(
+                            "ALTER TABLE quality_reports ALTER COLUMN dataset_id SET NOT NULL"
+                        ))
+        except Exception as e:
+            print(f"[Migration Warning] Failed to set quality_reports.dataset_id NOT NULL: {e}")
+
+
+
 
 
 def init_db():
-    """Tabloları oluşturur — uygulama ilk açılışında çağrılır."""
     Base.metadata.create_all(bind=engine)
-    print("[DB] Veritabanı hazır: PostgreSQL (Docker)")
+    run_light_migrations()
+    print("[DB] Tablolar hazır.")
 
 
 def get_db():
-    """Her istek için yeni bir oturum açar, biter kapanır."""
     db = SessionLocal()
     try:
         yield db
