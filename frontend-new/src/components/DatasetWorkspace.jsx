@@ -442,6 +442,11 @@ function ComparisonView({ comparison, onOpenStudio }) {
     { name: 'Format', before: comparison.health.before.format, after: comparison.health.after.format },
   ];
   const improvement = comparison.health.after_score - comparison.health.before_score;
+  const improvementText = improvement > 0
+    ? `+${formatValue(improvement)} puan gelişim`
+    : improvement < 0
+      ? `${formatValue(improvement)} puan düşüş`
+      : '0 puan değişim';
 
   return (
     <div className="workspace-comparison">
@@ -455,7 +460,7 @@ function ComparisonView({ comparison, onOpenStudio }) {
         <div className="comparison-score after glass-panel">
           <span>İşlem sonrası</span>
           <strong>%{formatValue(comparison.health.after_score)}</strong>
-          <small>+{formatValue(Math.max(0, improvement))} puan gelişim</small>
+          <small>{improvementText}</small>
         </div>
         <div className="comparison-score changes glass-panel">
           <span>Değişen hücre</span>
