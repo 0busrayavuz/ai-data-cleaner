@@ -6,7 +6,7 @@ import {
   Home,
   LayoutDashboard,
   LogIn,
-  LogOut,
+  UserRound,
   WandSparkles,
 } from 'lucide-react'
 import './App.css'
@@ -15,6 +15,7 @@ import FileUpload from './components/FileUpload'
 import AnalysisCards from './components/AnalysisCards'
 import AnalysisResults from './components/AnalysisResults'
 import HowItWorks from './components/HowItWorks'
+import FAQ from './components/FAQ'
 import Footer from './components/Footer'
 import {
   uploadFile,
@@ -32,6 +33,7 @@ import Chatbot from './components/Chatbot'
 import AuthModal from './components/AuthModal'
 import UserDashboard from './components/UserDashboard'
 import DatasetWorkspace from './components/DatasetWorkspace'
+import AccountSettings from './components/AccountSettings'
 
 function App() {
   const [status, setStatus] = useState('idle')
@@ -89,7 +91,7 @@ function App() {
     setIsLoggedIn(true)
     setUserEmail(user?.email || '')
     setIsAuthOpen(false)
-    setCurrentView('dashboard')
+    setCurrentView('panel')
     loadProjects()
     loadTemplates()
   }
@@ -152,7 +154,7 @@ function App() {
       setRecommendations(analyzeRes.recommendations?.recommendations || [])
       setStatus('results')
     } catch (e) {
-      setErrorMsg(e.message || 'Something went wrong')
+      setErrorMsg(e.message || 'Bir şeyler ters gitti.')
       setStatus('error')
     }
   }
@@ -219,7 +221,7 @@ function App() {
             </span>
             <div className="navbar-title-wrap">
               <h1 className="navbar-title">VeriTemiz <span>AI</span></h1>
-              <p className="navbar-tagline">Veri kalite çalışma alanı</p>
+              <p className="navbar-tagline">Veri kalitesi çalışma alanı</p>
             </div>
           </button>
           <div className="nav-links">
@@ -229,18 +231,18 @@ function App() {
               onClick={() => setCurrentView('home')}
             >
               <Home size={16} aria-hidden />
-              Ana Sayfa
+              Ana sayfa
             </button>
 
             {isLoggedIn ? (
               <>
                 <button
                   type="button"
-                  className={`nav-btn ${currentView === 'dashboard' ? 'active' : ''}`}
-                  onClick={() => setCurrentView('dashboard')}
+                  className={`nav-btn ${currentView === 'panel' ? 'active' : ''}`}
+                  onClick={() => setCurrentView('panel')}
                 >
                   <LayoutDashboard size={16} aria-hidden />
-                  Panelim
+                  Panel
                 </button>
                 <button
                   type="button"
@@ -248,7 +250,7 @@ function App() {
                   onClick={() => setCurrentView('profile')}
                 >
                   <FileSearch size={16} aria-hidden />
-                  Profil
+                  Veri Profili
                 </button>
                 <button
                   type="button"
@@ -266,15 +268,19 @@ function App() {
                   <GitCompareArrows size={16} aria-hidden />
                   Karşılaştır
                 </button>
-                <button type="button" className="nav-btn nav-btn-quiet" onClick={handleLogout}>
-                  <LogOut size={16} aria-hidden />
-                  Çıkış
+                <button
+                  type="button"
+                  className={`nav-btn nav-btn-account ${currentView === 'account' ? 'active' : ''}`}
+                  onClick={() => setCurrentView('account')}
+                >
+                  <UserRound size={16} aria-hidden />
+                  Hesabım
                 </button>
               </>
             ) : (
               <button type="button" className="nav-btn nav-btn-cta" onClick={() => setIsAuthOpen(true)}>
                 <LogIn size={16} aria-hidden />
-                Giriş Yap
+                Giriş yap
               </button>
             )}
           </div>
@@ -293,7 +299,7 @@ function App() {
                 }
                 document.getElementById('upload-workspace')?.scrollIntoView({ behavior: 'smooth' })
               }}
-              onOpenDashboard={() => setCurrentView('dashboard')}
+              onOpenPanel={() => setCurrentView('panel')}
             />
             <HowItWorks />
             <FileUpload
@@ -322,13 +328,21 @@ function App() {
               />
             )}
             <AnalysisCards />
+            <FAQ />
           </>
         )}
-        {currentView === 'dashboard' && (
+        {currentView === 'panel' && (
           <UserDashboard
             userEmail={userEmail}
             onNewAnalysis={() => setCurrentView('home')}
             onOpenDataset={(id) => openDatasetWorkspace(id, 'profile')}
+          />
+        )}
+        {currentView === 'account' && (
+          <AccountSettings
+            userEmail={userEmail}
+            onOpenPanel={() => setCurrentView('panel')}
+            onLogout={handleLogout}
           />
         )}
         {['profile', 'studio', 'comparison'].includes(currentView) && (

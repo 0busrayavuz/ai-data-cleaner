@@ -76,7 +76,7 @@ const Chatbot = ({ onNeedAuth, isLoggedIn = false }) => {
           <div className="chatbot-header">
             <div className="chatbot-title">
               <Bot size={20} className="chatbot-icon" />
-              <span>Veri Asistanı</span>
+              <span>Veri asistanı</span>
             </div>
             <button type="button" className="chatbot-close" onClick={toggleChat} aria-label="Kapat">
               <X size={20} />
@@ -87,7 +87,7 @@ const Chatbot = ({ onNeedAuth, isLoggedIn = false }) => {
             <div className="chatbot-auth-hint" role="status">
               Asistanı kullanmak için giriş yapın.
               <button type="button" className="chatbot-auth-btn" onClick={() => onNeedAuth?.()}>
-                Giriş / kayıt
+                Giriş yap / kayıt ol
               </button>
             </div>
           )}

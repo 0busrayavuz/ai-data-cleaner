@@ -1,16 +1,19 @@
 import axios from 'axios';
 
 const RAW_BASE = import.meta.env.VITE_API_URL;
-export const API_BASE =
+const _base =
   RAW_BASE !== undefined && RAW_BASE !== null && String(RAW_BASE).length > 0
     ? String(RAW_BASE).replace(/\/$/, '')
     : 'http://localhost:8000';
+// Tüm backend endpoint'leri /api/v1 prefix'i altında
+export const API_BASE = `${_base}/api/v1`;
 
 export function getStoredToken() {
   return sessionStorage.getItem('token') || localStorage.getItem('token');
 }
 
 export function setAuthToken(token, rememberMe) {
+
   try {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
@@ -54,6 +57,27 @@ function parseDetail(error) {
 export async function fetchMe() {
   try {
     const res = await api.get('/me');
+    return res.data;
+  } catch (e) {
+    throw new Error(parseDetail(e));
+  }
+}
+
+export async function fetchAccountSummary() {
+  try {
+    const res = await api.get('/me/account');
+    return res.data;
+  } catch (e) {
+    throw new Error(parseDetail(e));
+  }
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  try {
+    const res = await api.post('/me/password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
     return res.data;
   } catch (e) {
     throw new Error(parseDetail(e));

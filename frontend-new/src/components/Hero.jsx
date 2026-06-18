@@ -16,13 +16,13 @@ const QUALITY_ROWS = [
   { label: 'Aykırı gözlemler', value: 71, tone: 'amber' },
 ];
 
-const Hero = ({ isLoggedIn, onStart, onOpenDashboard }) => {
+const Hero = ({ isLoggedIn, onStart, onOpenPanel }) => {
   return (
     <section className="hero-section" aria-labelledby="hero-heading">
       <div className="hero-copy">
         <div className="hero-badge">
           <Sparkles size={15} aria-hidden />
-          <span>Akıllı veri kalitesi ve karar destek sistemi</span>
+          <span>Akıllı veri kalitesi karar destek sistemi</span>
         </div>
 
         <h2 id="hero-heading" className="hero-title">
@@ -37,12 +37,12 @@ const Hero = ({ isLoggedIn, onStart, onOpenDashboard }) => {
 
         <div className="hero-actions">
           <button type="button" className="btn-primary hero-primary" onClick={onStart}>
-            {isLoggedIn ? 'Yeni analiz başlat' : 'Ücretsiz kullanmaya başla'}
+            {isLoggedIn ? 'Yeni analiz başlat' : 'Kullanmaya başla'}
             <ArrowRight size={18} aria-hidden />
           </button>
           {isLoggedIn && (
-            <button type="button" className="hero-secondary" onClick={onOpenDashboard}>
-              Çalışma alanını aç
+            <button type="button" className="hero-secondary" onClick={onOpenPanel}>
+              Paneli aç
             </button>
           )}
         </div>
@@ -54,23 +54,23 @@ const Hero = ({ isLoggedIn, onStart, onOpenDashboard }) => {
         </div>
       </div>
 
-      <div className="hero-visual" aria-label="Örnek veri kalite kokpiti">
+      <div className="hero-visual" aria-label="Örnek veri kalitesi paneli">
         <div className="cockpit-shell">
           <div className="cockpit-topbar">
             <div className="cockpit-file">
               <span className="cockpit-file-icon"><FileSpreadsheet size={18} /></span>
               <div>
-                <strong>sales_dataset.csv</strong>
+                <strong>satis_verisi.csv</strong>
                 <small>12.480 satır · 18 sütun</small>
               </div>
             </div>
-            <span className="cockpit-live"><i /> ÖRNEK KALİTE GÖRÜNÜMÜ</span>
+            <span className="cockpit-live"><i /> ÖRNEK VERİ GÖRÜNÜMÜ</span>
           </div>
 
           <div className="cockpit-grid">
             <div className="quality-score-card">
               <div className="quality-score-head">
-                <span>Veri kalite skoru</span>
+                <span>Veri kalitesi skoru</span>
                 <Gauge size={18} aria-hidden />
               </div>
               <div className="quality-score-body">
@@ -116,11 +116,11 @@ const Hero = ({ isLoggedIn, onStart, onOpenDashboard }) => {
 
         <div className="floating-security">
           <ShieldCheck size={19} aria-hidden />
-          <div><strong>İzlenebilir işlem</strong><span>Her değişiklik kayıt altında</span></div>
+          <div><strong>İzlenebilir süreç</strong><span>Her değişiklik kayıt altında</span></div>
         </div>
         <div className="floating-dataset">
           <Database size={18} aria-hidden />
-          <span>CSV çıktı + kalite raporu</span>
+          <span>CSV çıktısı + kalite raporu</span>
         </div>
       </div>
     </section>

@@ -140,12 +140,12 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         resetRegisterForm();
         changeView('login');
         resetLoginForm();
-        setTimeout(() => setErrorMsg('Kayıt başarılı! Lütfen giriş yapın.'), 400);
+        setTimeout(() => setErrorMsg('Kayıt başarılı. Lütfen giriş yapın.'), 400);
       } else if (view === 'forgot-password') {
         const email = e.target.querySelector('input[type="email"]').value;
         await forgotPassword(email);
         changeView('reset-password');
-        setTimeout(() => setErrorMsg('Sıfırlama kodu gönderildi (Geliştirme aşamasında konsola yazdırılır).'), 450);
+        setTimeout(() => setErrorMsg('Sıfırlama kodu oluşturuldu. Geliştirme ortamında kod sunucu çıktısında görüntülenir.'), 450);
       } else if (view === 'reset-password') {
         const tokenVal = e.target.querySelector('input[name="reset-token"]').value;
         const pw = e.target.querySelector('input[name="new-password"]').value;
@@ -196,7 +196,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         <div className="auth-content">
           {view === 'login' && (
             <div className="auth-view">
-              <h2 className="glow-text">Hoş Geldiniz</h2>
+              <h2 className="glow-text">Hoş geldiniz</h2>
               <p className="auth-subtitle">Sisteme giriş yaparak verilerinizi yönetin.</p>
 
               {errorMsg && (
@@ -278,7 +278,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                     Beni hatırla
                   </label>
                   <button type="button" className="text-btn" onClick={() => changeView('forgot-password')}>
-                    Şifremi Unuttum
+                    Şifremi unuttum
                   </button>
                 </div>
                 <p className="remember-hint">
@@ -286,14 +286,14 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                 </p>
 
                 <button type="submit" className="btn-primary auth-submit" disabled={loading}>
-                  {loading ? <Loader className="spin" size={18} aria-hidden /> : <>Giriş Yap <ArrowRight size={18} aria-hidden /></>}
+                  {loading ? <Loader className="spin" size={18} aria-hidden /> : <>Giriş yap <ArrowRight size={18} aria-hidden /></>}
                 </button>
               </form>
 
               <p className="auth-footer">
                 Hesabınız yok mu?{' '}
                 <button type="button" className="text-btn highlight" onClick={goToRegister}>
-                  Kayıt Ol
+                  Kayıt ol
                 </button>
               </p>
             </div>
@@ -304,7 +304,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
               <div className="icon-header">
                 <UserPlus size={40} className="glow-icon" aria-hidden />
               </div>
-              <h2 className="glow-text">Hesap Oluştur</h2>
+              <h2 className="glow-text">Hesap oluştur</h2>
               <p className="auth-subtitle">
                 VeriTemiz AI ile dosyalarınızı güvenle yükleyin. Kayıt için yalnızca e-posta ve şifre yeterlidir.
               </p>
@@ -398,7 +398,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                     type={showRegConfirm ? 'text' : 'password'}
                     name="register-confirm"
                     autoComplete="new-password"
-                    placeholder="Şifre tekrar"
+                    placeholder="Şifre tekrarı"
                     className="auth-input"
                     value={regConfirm}
                     onChange={(e) => {
@@ -444,7 +444,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                   {loading ? (
                     <Loader className="spin" size={18} aria-hidden />
                   ) : (
-                    <>Hesap Oluştur <ArrowRight size={18} aria-hidden /></>
+                    <>Hesap oluştur <ArrowRight size={18} aria-hidden /></>
                   )}
                 </button>
               </form>
@@ -452,7 +452,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
               <p className="auth-footer">
                 Zaten hesabınız var mı?{' '}
                 <button type="button" className="text-btn highlight" onClick={() => changeView('login')}>
-                  Giriş Yap
+                  Giriş yap
                 </button>
               </p>
             </div>
@@ -463,9 +463,9 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
               <div className="icon-header">
                 <KeyRound size={40} className="glow-icon" />
               </div>
-              <h2 className="glow-text">Şifremi Unuttum</h2>
+              <h2 className="glow-text">Şifremi unuttum</h2>
               <p className="auth-subtitle">
-                E-postanızı girin. Üretimde bağlantı e-postayla gider; geliştirmede sunucu token döndürebilir.
+                E-posta adresinizi girin. Şifre sıfırlama kodu oluşturulacaktır.
               </p>
 
               {errorMsg && <div className={`auth-message ${errorMsg.includes('alındı') ? 'success' : 'error'}`}>{errorMsg}</div>}
@@ -473,16 +473,16 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
               <form onSubmit={handleSubmit} className="auth-form">
                 <div className="input-group">
                   <Mail className="input-icon" size={20} />
-                  <input type="email" placeholder="E-posta Adresi" className="auth-input" required />
+                  <input type="email" placeholder="E-posta adresi" className="auth-input" required />
                 </div>
                 <button type="submit" className="btn-primary auth-submit" disabled={loading}>
-                  {loading ? <Loader className="spin" size={18} /> : <>Devam Et <ArrowRight size={18} /></>}
+                  {loading ? <Loader className="spin" size={18} /> : <>Devam et <ArrowRight size={18} /></>}
                 </button>
               </form>
 
               <p className="auth-footer">
                 <button type="button" className="text-btn highlight" onClick={() => changeView('login')}>
-                  Giriş Ekranına Dön
+                  Giriş ekranına dön
                 </button>
               </p>
             </div>
@@ -493,8 +493,8 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
               <div className="icon-header">
                 <KeyRound size={40} className="glow-icon" />
               </div>
-              <h2 className="glow-text">Yeni Şifre</h2>
-              <p className="auth-subtitle">En az 8 karakter; üretimde bu adım e-postadaki bağlantıyla açılır.</p>
+              <h2 className="glow-text">Yeni şifre</h2>
+              <p className="auth-subtitle">Yeni şifreniz en az 8 karakter olmalıdır.</p>
 
               {errorMsg && (
                 <div className={`auth-message ${errorMsg.includes('Geliştirme') ? 'success' : 'error'}`}>{errorMsg}</div>
@@ -503,7 +503,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
               <form onSubmit={handleSubmit} className="auth-form">
                 <div className="input-group">
                   <KeyRound className="input-icon" size={20} />
-                  <input type="text" name="reset-token" placeholder="Sıfırlama Kodu (Token)" className="auth-input" required />
+                  <input type="text" name="reset-token" placeholder="Sıfırlama kodu" className="auth-input" required />
                 </div>
                 <div className="input-group">
                   <Lock className="input-icon" size={20} />
@@ -521,13 +521,13 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
                   />
                 </div>
                 <button type="submit" className="btn-primary auth-submit" disabled={loading}>
-                  {loading ? <Loader className="spin" size={18} /> : <>Şifreyi Güncelle <ArrowRight size={18} /></>}
+                  {loading ? <Loader className="spin" size={18} /> : <>Şifreyi güncelle <ArrowRight size={18} /></>}
                 </button>
               </form>
 
               <p className="auth-footer">
                 <button type="button" className="text-btn highlight" onClick={() => changeView('login')}>
-                  Giriş Ekranına Dön
+                  Giriş ekranına dön
                 </button>
               </p>
             </div>

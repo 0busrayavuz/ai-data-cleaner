@@ -131,6 +131,21 @@
   color: var(--text-muted);
 }
 
+.nav-btn-account {
+  margin-left: 0.35rem;
+  color: #0a705b;
+  background: rgba(12, 143, 114, 0.1);
+  border: 1px solid rgba(12, 143, 114, 0.16);
+  font-weight: 700;
+}
+
+.nav-btn-account:hover,
+.nav-btn-account.active {
+  color: white;
+  background: var(--surface-dark);
+  border-color: var(--surface-dark);
+}
+
 .nav-btn:active {
   transform: scale(0.98);
 }

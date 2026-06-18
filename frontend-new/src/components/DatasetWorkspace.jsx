@@ -61,12 +61,49 @@ const VIEW_TABS = [
   { id: 'comparison', label: 'Önce / Sonra', icon: GitCompareArrows },
 ];
 
+const DATASET_STATUS_LABELS = {
+  uploaded: 'Yüklendi',
+  analyzing: 'Analiz ediliyor',
+  ready: 'Analiz hazır',
+  processing: 'Temizleniyor',
+  cleaned: 'Temizlendi',
+  error: 'Hata',
+};
+
 const numberFormat = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 });
+
+function getWorkspaceSourceInfo(view, workspace) {
+  if (view === 'studio') {
+    return {
+      title: 'Kaynak: ham veri analizi',
+      description: 'Öneriler yüklenen ham dosya üzerinden gerçek analiz sonucu üretilir; kullanıcı onayı olmadan veri değiştirilmez.',
+    };
+  }
+  if (view === 'comparison') {
+    return workspace?.comparison
+      ? {
+          title: 'Kaynak: ham veri + son temizlenmiş çıktı',
+          description: 'Karşılaştırma, yüklenen ham dosya ile diskteki son temizlenmiş CSV çıktısından hesaplanır.',
+        }
+      : {
+          title: 'Kaynak bekleniyor',
+          description: 'Karşılaştırma ekranı için önce Temizlik Stüdyosu’nda en az bir işlem uygulanmalıdır.',
+        };
+  }
+  return {
+    title: 'Kaynak: yüklenen ham dosya',
+    description: 'Profil metrikleri, dağılımlar ve ön izleme doğrudan yüklenen orijinal veri setinden hesaplanır.',
+  };
+}
 
 function formatValue(value) {
   if (value == null || value === '') return '—';
   if (typeof value === 'number') return numberFormat.format(value);
   return String(value);
+}
+
+function formatDatasetStatus(status) {
+  return DATASET_STATUS_LABELS[status] || status || 'Bilinmiyor';
 }
 
 function DatasetWorkspace({
@@ -176,6 +213,7 @@ function DatasetWorkspace({
   const selectedDataset = datasets.find((row) => row.id === Number(selectedDatasetId));
   const meta = VIEW_META[view] || VIEW_META.profile;
   const HeaderIcon = meta.icon;
+  const sourceInfo = workspace ? getWorkspaceSourceInfo(view, workspace) : null;
 
   const handleApply = (selections) => applyClean(selectedDatasetId, selections);
 
@@ -188,7 +226,7 @@ function DatasetWorkspace({
       <section className="workspace-empty glass-panel">
         <Database size={34} aria-hidden />
         <h2>Henüz veri seti yok</h2>
-        <p>Bu ekranları kullanmak için önce ana sayfadan bir CSV, TXT veya Excel dosyası yükleyin.</p>
+        <p>Bu ekranları kullanmak için önce ana sayfadan CSV, XLSX veya TXT dosyası yükleyin.</p>
         <button type="button" className="btn-primary" onClick={() => onNavigate('home')}>
           Dosya yüklemeye git <ArrowRight size={17} />
         </button>
@@ -243,6 +281,19 @@ function DatasetWorkspace({
         })}
       </nav>
 
+      {!loading && workspace && sourceInfo && (
+        <section className="workspace-source-strip glass-panel">
+          <div>
+            <Database size={18} />
+            <span>
+              <strong>{sourceInfo.title}</strong>
+              <small>{sourceInfo.description}</small>
+            </span>
+          </div>
+          <em>Durum: {formatDatasetStatus(workspace.dataset.status)}</em>
+        </section>
+      )}
+
       {error && (
         <div className="workspace-alert error">
           <TriangleAlert size={19} />
@@ -272,7 +323,7 @@ function DatasetWorkspace({
               <Sparkles size={18} />
               <span><strong>{recommendations.length}</strong> karar önerisi</span>
             </div>
-            <p>Yöntemler otomatik uygulanmaz; son karar kullanıcıya aittir.</p>
+            <p>Öneriler gerçek analizden gelir; yöntemler otomatik uygulanmaz, son karar kullanıcıya aittir.</p>
           </div>
           {analysisLoading ? (
             <div className="workspace-loading glass-panel">
@@ -294,7 +345,7 @@ function DatasetWorkspace({
           ) : (
             <div className="workspace-empty glass-panel">
               <CheckCircle2 size={34} />
-              <h3>Uygulanacak sorun bulunamadı</h3>
+              <h3>Uygulanacak öneri bulunamadı</h3>
               <p>Analiz bu veri setinde zorunlu bir temizleme önerisi üretmedi.</p>
             </div>
           )}
@@ -319,7 +370,7 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
         <MetricCard icon={Rows3} label="Satır" value={profile.row_count} tone="emerald" />
         <MetricCard icon={Columns3} label="Sütun" value={profile.col_count} tone="blue" />
         <MetricCard icon={TriangleAlert} label="Eksik hücre" value={profile.missing_cells} tone="amber" />
-        <MetricCard icon={TableProperties} label="Tekrarlı satır" value={profile.duplicate_rows} tone="purple" />
+        <MetricCard icon={TableProperties} label="Tekrar eden satır" value={profile.duplicate_rows} tone="purple" />
       </section>
 
       <section className="workspace-profile-grid">
@@ -385,7 +436,7 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <p className="workspace-muted">Bu sütun için çizilebilir değer yok.</p>
+                  <p className="workspace-muted">Bu sütun için çizilebilir veri yok.</p>
                 )}
               </div>
             </>
@@ -416,7 +467,7 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
             <p className="workspace-muted">Korelasyon için en az iki sayısal sütun gerekir.</p>
           )}
         </div>
-        <PreviewTable title="Ham veri önizlemesi" rows={profile.preview} />
+        <PreviewTable title="Ham veri ön izlemesi" rows={profile.preview} />
       </section>
     </div>
   );
@@ -465,7 +516,27 @@ function ComparisonView({ comparison, onOpenStudio }) {
         <div className="comparison-score changes glass-panel">
           <span>Değişen hücre</span>
           <strong>{comparison.total_changed_cells == null ? '—' : formatValue(comparison.total_changed_cells)}</strong>
-          <small>{comparison.rows_aligned ? 'Satır konumları eşleşiyor' : 'Satır silindiği için hücre bazında sayılmadı'}</small>
+          <small>{comparison.rows_aligned ? 'Satırlar aynı konumda karşılaştırıldı' : 'Satır silindiği için hücre bazında sayılmadı'}</small>
+        </div>
+      </section>
+
+      <section className="comparison-health-note glass-panel">
+        <div>
+          <span><Activity size={18} /> Sağlık skoru nasıl okunur?</span>
+          <p>
+            Skor, toplam hücre sayısına göre eksik veri, format problemi ve aykırı
+            değerlerin ağırlıklı cezası çıkarılarak hesaplanır. Aykırı değerler
+            hata olmak zorunda olmadığı için daha düşük ağırlıkla değerlendirilir.
+            Satır silme varsa ayrıca her %1 silme için 0.5 puan ceza uygulanır.
+          </p>
+        </div>
+        <div className="comparison-weight-list" aria-label="Health score ağırlıkları">
+          <span>Eksik veri x{comparison.weights.missing}</span>
+          <span>Format x{comparison.weights.format}</span>
+          <span>Aykırı değer x{comparison.weights.outlier}</span>
+          {comparison.health.row_delete_penalty > 0 && (
+            <span>Satır silme -{formatValue(comparison.health.row_delete_penalty)} puan</span>
+          )}
         </div>
       </section>
 
@@ -489,7 +560,7 @@ function ComparisonView({ comparison, onOpenStudio }) {
             </BarChart>
           </ResponsiveContainer>
           <p className="comparison-method-note">
-            Aykırı değerler önce ve sonra aynı başlangıç IQR sınırlarıyla ölçülür.
+            Aykırı değerler önce ve sonra aynı başlangıç IQR sınırlarına göre ölçülür.
             Ağırlıklar: eksik {comparison.weights.missing}, format {comparison.weights.format}, aykırı {comparison.weights.outlier}.
           </p>
         </div>
@@ -534,10 +605,10 @@ function ComparisonView({ comparison, onOpenStudio }) {
               <tr>
                 <th>Sütun</th>
                 <th>Tür</th>
-                <th>Eksik önce</th>
-                <th>Eksik sonra</th>
-                <th>Ortalama önce</th>
-                <th>Ortalama sonra</th>
+                <th>Eksik (önce)</th>
+                <th>Eksik (sonra)</th>
+                <th>Ortalama (önce)</th>
+                <th>Ortalama (sonra)</th>
                 <th>Değişen hücre</th>
               </tr>
             </thead>
@@ -563,7 +634,7 @@ function ComparisonView({ comparison, onOpenStudio }) {
           <div className="workspace-panel-heading">
             <div>
               <span>Değişiklik örnekleri</span>
-              <h3>İlk {comparison.changed_samples.length} hücre</h3>
+              <h3>İlk {comparison.changed_samples.length} değişiklik</h3>
             </div>
           </div>
           <div className="workspace-table-scroll">
@@ -617,7 +688,7 @@ function PreviewTable({ title, rows }) {
             </tbody>
           </table>
         </div>
-      ) : <p className="workspace-muted">Önizlenecek kayıt yok.</p>}
+      ) : <p className="workspace-muted">Ön izleme için kayıt yok.</p>}
     </div>
   );
 }

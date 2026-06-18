@@ -76,7 +76,7 @@ const FileUpload = ({
       <div className="upload-heading-row">
         <div>
           <span className="upload-overline">Yeni çalışma</span>
-          <h3 id="upload-heading">Veri setinizi analiz alanına alın.</h3>
+          <h3 id="upload-heading">Veri setinizi analiz için yükleyin.</h3>
         </div>
         <p>
           Dosyanız önce okunabilirlik ve yapı kontrolünden geçer. Analiz sonucunda
@@ -89,7 +89,7 @@ const FileUpload = ({
           <div className="upload-sidebar-head">
             <span className="upload-sidebar-icon"><FolderKanban size={20} /></span>
             <div>
-              <strong>Çalışma bağlamı</strong>
+              <strong>Çalışma bilgisi</strong>
               <small>Dosyanızı bir proje altında gruplayın.</small>
             </div>
           </div>
@@ -150,6 +150,11 @@ const FileUpload = ({
           <div className="upload-security-note">
             <ShieldCheck size={17} aria-hidden />
             <span>İşlem geçmişi ve dosya sahipliği korunur.</span>
+          </div>
+
+          <div className="upload-scope-note">
+            <strong>Analiz kapsamı</strong>
+            <span>CSV, XLSX ve TXT tablo verileri için önerilir. Güvenli yükleme sınırı: maks. 20 MB.</span>
           </div>
         </aside>
 

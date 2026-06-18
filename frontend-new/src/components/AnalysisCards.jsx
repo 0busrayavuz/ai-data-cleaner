@@ -13,14 +13,14 @@ const METHODS = [
   {
     icon: BrainCircuit,
     eyebrow: 'Eksik veri',
-    title: 'Akıllı tamamlama',
+    title: 'Tahmine dayalı tamamlama',
     description: 'MICE ve KNN ile diğer sütunlardaki örüntülerden yararlanarak tahmin üretir.',
     methods: ['MICE', 'KNN Imputer', 'Ortalama / Medyan'],
     tone: 'emerald',
   },
   {
     icon: CircleDotDashed,
-    eyebrow: 'Anomali',
+    eyebrow: 'Aykırı değer',
     title: 'Çok yöntemli tespit',
     description: 'Tek değişkenli ve bağlamsal anomalileri farklı algoritmalarla karşılaştırır.',
     methods: ['Isolation Forest', 'DBSCAN', 'IQR'],
@@ -31,7 +31,7 @@ const METHODS = [
     eyebrow: 'Format',
     title: 'Tutarlılık onarımı',
     description: 'Metin, tarih, sayısal tip ve benzer kategori problemlerini standartlaştırır.',
-    methods: ['Tip dönüşümü', 'Fuzzy eşleme', 'Metin normalizasyonu'],
+    methods: ['Tip dönüşümü', 'Benzer değer eşleme', 'Metin normalizasyonu'],
     tone: 'amber',
   },
   {
@@ -39,7 +39,7 @@ const METHODS = [
     eyebrow: 'Özellik',
     title: 'Model öncesi hazırlık',
     description: 'Kategorik ve sayısal değişkenleri makine öğrenmesi için hazır hale getirir.',
-    methods: ['One-hot', 'Label encoding', 'Ölçekleme'],
+    methods: ['One-hot encoding', 'Etiket kodlama', 'Ölçekleme'],
     tone: 'violet',
   },
 ];

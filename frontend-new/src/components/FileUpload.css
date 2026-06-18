@@ -192,6 +192,31 @@
   color: var(--accent-primary);
 }
 
+.upload-scope-note {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(12, 143, 114, 0.14);
+  border-radius: 12px;
+  background: rgba(12, 143, 114, 0.055);
+}
+
+.upload-scope-note strong,
+.upload-scope-note span {
+  display: block;
+}
+
+.upload-scope-note strong {
+  color: var(--text-primary);
+  font-size: 0.76rem;
+}
+
+.upload-scope-note span {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 0.69rem;
+  line-height: 1.5;
+}
+
 .dropzone {
   min-width: 0;
   padding: 34px;

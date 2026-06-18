@@ -6,7 +6,7 @@ const STEPS = [
   {
     number: '01',
     icon: UploadCloud,
-    title: 'Veriyi içeri alın',
+    title: 'Verinizi yükleyin',
     text: 'CSV, XLSX veya TXT dosyanızı proje altında güvenli biçimde yükleyin.',
   },
   {
@@ -25,7 +25,7 @@ const STEPS = [
     number: '04',
     icon: PlayCircle,
     title: 'Uygulayın ve raporlayın',
-    text: 'Temiz çıktıyı indirin; değişiklik geçmişini PDF, HTML ve denetim kaydıyla saklayın.',
+    text: 'Temizlenmiş çıktıyı indirin; değişiklik geçmişini PDF, HTML ve denetim kaydıyla saklayın.',
   },
 ];
 

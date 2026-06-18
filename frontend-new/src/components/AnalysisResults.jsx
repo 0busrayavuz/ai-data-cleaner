@@ -53,7 +53,7 @@ const AnalysisResults = ({
     try {
       await downloadCleanedDataset(datasetId, downloadFilename());
     } catch (err) {
-      setDownloadError(err.message || 'İndirme başarısız');
+      setDownloadError(err.message || 'İndirme başarısız.');
     }
   };
 
@@ -63,7 +63,7 @@ const AnalysisResults = ({
     try {
       await downloadQualityReport(datasetId, format);
     } catch (err) {
-      setDownloadError(err.message || `${format.toUpperCase()} raporu indirme başarısız`);
+      setDownloadError(err.message || `${format.toUpperCase()} raporu indirilemedi.`);
     }
   };
 
@@ -129,7 +129,7 @@ const AnalysisResults = ({
       const interval = setInterval(async () => {
         if (Date.now() > deadline) {
           clearInterval(interval);
-          reject(new Error('İşlem zaman aşımına uğradı. Lütfen sayfayı yenileyerek durumu kontrol edin.'));
+          reject(new Error('İşlem zaman aşımına uğradı. Lütfen sayfayı yenileyip durumu tekrar kontrol edin.'));
           return;
         }
         try {
@@ -160,7 +160,7 @@ const AnalysisResults = ({
       setApplied(true);
       onApplied?.();
     } catch (e) {
-      setTemplateMsg(e.message || 'Uygulama başarısız');
+      setTemplateMsg(e.message || 'İşlem uygulanamadı.');
     } finally {
       setLoading(false);
     }
@@ -185,7 +185,7 @@ const AnalysisResults = ({
       setTemplateMsg('Şablon kaydedildi.');
       onTemplatesChanged?.();
     } catch (e) {
-      setTemplateMsg(e.message || 'Kayıt başarısız');
+      setTemplateMsg(e.message || 'Şablon kaydedilemedi.');
     } finally {
       setTemplateBusy(false);
     }
@@ -207,7 +207,7 @@ const AnalysisResults = ({
       setApplied(true);
       onApplied?.();
     } catch (e) {
-      setTemplateMsg(e.message || 'Şablon uygulanamadı');
+      setTemplateMsg(e.message || 'Şablon uygulanamadı.');
     } finally {
       setLoading(false);
     }
@@ -266,8 +266,16 @@ const AnalysisResults = ({
             onChange={handleSelectAll}
           />
           <div className="checkbox-custom"><Check size={14} className="check-icon" /></div>
-          <span>Tümünü Seç / Seçimi Kaldır ({selectedIds.length}/{recommendations.length} seçili)</span>
+          <span>Tümünü seç / seçimi kaldır ({selectedIds.length}/{recommendations.length} seçili)</span>
         </label>
+      </div>
+
+      <div className="studio-decision-note glass-panel">
+        <strong>Nasıl çalışır?</strong>
+        <span>
+          Yalnızca seçili öneriler uygulanır. Her öneride tek yöntem seçilir ve işlem ham dosyayı değiştirmeden
+          ayrı bir temizlenmiş çıktı üretir.
+        </span>
       </div>
 
       {!applied && templates.length > 0 && (
@@ -333,7 +341,7 @@ const AnalysisResults = ({
                     className={`btn-expand ${isExpanded ? 'active' : ''}`}
                     onClick={() => toggleExpand(i)}
                   >
-                    {isExpanded ? 'Kapat' : 'Detay Gör'}
+                    {isExpanded ? 'Kapat' : 'Detay gör'}
                     {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                   </button>
                 </div>
@@ -345,7 +353,7 @@ const AnalysisResults = ({
 
                   {rec.options && rec.options.length > 0 && (
                     <div className="options-container">
-                      <h5 className="options-title">Çözüm Yöntemi:</h5>
+                      <h5 className="options-title">Çözüm yöntemi</h5>
                       <div className="options-grid">
                         {rec.options.map(opt => {
                           const isOptionSelected = selectedMethods[rec.id] === opt.id;
@@ -418,7 +426,7 @@ const AnalysisResults = ({
             onClick={handleApply}
             disabled={loading || selectedIds.length === 0}
           >
-            {loading ? 'Uygulanıyor...' : `Seçili Olanları Uygula (${selectedIds.length} İşlem)`}
+            {loading ? 'Uygulanıyor…' : `Seçili işlemleri uygula (${selectedIds.length})`}
           </button>
         ) : (
           <>
@@ -433,7 +441,7 @@ const AnalysisResults = ({
                 onClick={handleDownloadClick}
               >
                 <Download size={18} style={{ marginRight: 8 }} />
-                Temiz Veriyi İndir (CSV)
+                Temiz veriyi indir (CSV)
               </button>
               <button
                 type="button"
@@ -441,7 +449,7 @@ const AnalysisResults = ({
                 onClick={(e) => handleDownloadReportClick(e, 'html')}
               >
                 <Download size={18} style={{ marginRight: 8 }} />
-                HTML Raporu İndir
+                HTML raporunu indir
               </button>
               <button
                 type="button"
@@ -449,7 +457,7 @@ const AnalysisResults = ({
                 onClick={(e) => handleDownloadReportClick(e, 'pdf')}
               >
                 <Download size={18} style={{ marginRight: 8 }} />
-                PDF Raporu İndir
+                PDF raporunu indir
               </button>
             </div>
           </>

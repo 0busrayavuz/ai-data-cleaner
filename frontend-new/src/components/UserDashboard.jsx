@@ -20,7 +20,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
       setPayload(data);
       setError('');
     } catch (e) {
-      setError(e.message || 'Veriler yüklenemedi');
+      setError(e.message || 'Veriler yüklenemedi.');
     } finally {
       setLoading(false);
     }
@@ -44,7 +44,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
         if (!cancelled) setTimeline(t);
       })
       .catch((e) => {
-        if (!cancelled) setTimelineError(e.message || 'Zaman çizelgesi yüklenemedi');
+        if (!cancelled) setTimelineError(e.message || 'Zaman çizelgesi yüklenemedi.');
       })
       .finally(() => {
         if (!cancelled) setTimelineLoading(false);
@@ -80,8 +80,8 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
     <div className="dashboard-container">
       <header className="dashboard-header">
         <div>
-          <span className="dashboard-overline">Çalışma alanı</span>
-          <h2>Veri kalite paneli</h2>
+          <span className="dashboard-overline">Panel</span>
+          <h2>Çalışma paneli</h2>
           <p className="dashboard-subtitle">
             Projelerinizi, veri setlerinizi ve işlem geçmişinizi tek noktadan yönetin.
           </p>
@@ -177,7 +177,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
                 <Database size={24} />
               </div>
               <div className="stat-info">
-                <h3>Toplam İşlenen Satır</h3>
+                <h3>Toplam işlenen satır</h3>
                 <p className="stat-value">{stats.total_rows_processed.toLocaleString('tr-TR')}</p>
               </div>
             </div>
@@ -186,7 +186,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
                 <Activity size={24} />
               </div>
               <div className="stat-info">
-                <h3>Listelenen Veri Seti</h3>
+                <h3>Listelenen veri seti</h3>
                 <p className="stat-value">{stats.dataset_count}</p>
               </div>
             </div>
@@ -195,7 +195,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
                 <Clock size={24} />
               </div>
               <div className="stat-info">
-                <h3>Temizlenmiş Çıktı</h3>
+                <h3>Temizlenmiş çıktı</h3>
                 <p className="stat-value">{stats.cleaned_dataset_count}</p>
               </div>
             </div>
@@ -203,7 +203,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
 
           <section className="dashboard-history">
             <div className="history-header">
-              <h3>Geçmiş Yüklemeler</h3>
+              <h3>Geçmiş yüklemeler</h3>
               <button type="button" className="text-btn highlight" onClick={load}>
                 <RefreshCw size={15} /> Yenile
               </button>
@@ -214,11 +214,11 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
                 <thead>
                   <tr>
                     <th>Proje</th>
-                    <th>Dosya Adı</th>
+                    <th>Dosya adı</th>
                     <th>Tarih</th>
-                    <th>Satır Sayısı</th>
+                    <th>Satır sayısı</th>
                     <th>Durum</th>
-                    <th>İşlem</th>
+                    <th>İşlemler</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -258,14 +258,14 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
                           {/* Show download only when current status is genuinely cleaned */}
                           {(item.status === 'cleaned' || (item.cleaned_ready && item.status !== 'processing' && item.status !== 'analyzing' && item.status !== 'error')) && (
                             <button type="button" className="action-btn download" onClick={() => handleDownload(item)}>
-                              <Download size={16} /> İndir
+                              <Download size={16} /> Temiz veriyi indir
                             </button>
                           )}
                           <button
                             type="button"
                             className="action-btn audit"
                             onClick={() => handleAuditExport(item)}
-                            title="İşlem ve kalite günlüğünü CSV indir"
+                            title="İşlem ve kalite günlüğünü CSV olarak indir"
                           >
                             <FileSpreadsheet size={16} /> Denetim
                           </button>
