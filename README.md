@@ -6,13 +6,32 @@ Kullanıcıların veri bilimi geçmişi olmasa bile kompleks işlemleri tek tık
 
 ---
 
+## Kapsam ve Sınırlar
+
+Bu proje küçük ve orta ölçekli tablo verileri için tasarlanmıştır. Varsayılan dosya
+yükleme sınırı 20 MB'dir. Bu sınır, bitirme projesi kapsamında güvenli demo,
+makul analiz süresi ve bellek tüketimini kontrol altında tutmak için bilinçli
+olarak seçilmiştir.
+
+Veri seti boyutu önemlidir; çünkü sistem CSV/Excel dosyasını Pandas ile belleğe
+alır ve MICE, KNN, DBSCAN, Isolation Forest, LOF gibi yöntemler veri büyüdükçe
+daha fazla zaman ve bellek kullanır. Daha büyük veri senaryoları için örnekleme,
+parça parça okuma (chunk processing), kalıcı görev kuyruğu ve dağıtık işleme
+gelecek çalışma olarak planlanabilir.
+
+AI Data Cleaner, kullanıcı onayı olmadan ham veriyi değiştirmez. Sistem analiz
+eder, seçenekleri sunar, uygulanan işlemleri raporlar ve temizlenmiş çıktıyı ayrı
+dosya olarak üretir.
+
+---
+
 ## 🛠 Kullanılan Teknolojiler ve Mimari
 
 Proje, güncel sanayi standartlarına uygun bir **Microservices (Mikroservis)** yapısı felsefesiyle tasarlanmıştır. Piyasada yer edinmiş, performanslı teknolojiler tercih edilmiştir:
 
 ### ⚙️ Backend (Arka Plan - Veri & Yapay Zeka Merkezi)
 *   **Çatı (Framework):** Python tabanlı `FastAPI`. Sunucu asenkron yapısıyla son derece hızlıdır. Tıkanmadan paralel veri analizi yapabilir.
-*   **Veri Manipülasyonu:** `Pandas` ve `NumPy`. Büyük CSV/Excel veri setleri üzerinde saniyeler içinde matris işlemleri yürütür.
+*   **Veri Manipülasyonu:** `Pandas` ve `NumPy`. Küçük ve orta ölçekli CSV/Excel veri setleri üzerinde hızlı profil çıkarma, analiz ve temizlik işlemleri yürütür.
 *   **Makine Öğrenmesi (ML) Modelleri:** `Scikit-learn`
     *   *DBSCAN:* Yoğunluk tabanlı mekansal kümeleme. Çok yönlü (multivariate) bağlamsal aykırıları (Outlier) siler.
     *   *Isolation Forest (İzolasyon Ormanı):* Anormallikleri izole etmek için karar ağaçları topluluğunu kullanır.

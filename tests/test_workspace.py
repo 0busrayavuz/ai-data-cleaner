@@ -50,3 +50,14 @@ def test_comparison_avoids_false_cell_alignment_after_row_deletion():
     assert comparison["rows_aligned"] is False
     assert comparison["total_changed_cells"] is None
     assert comparison["columns"][0]["changed_cells"] is None
+
+
+def test_comparison_health_penalizes_deleted_rows():
+    before = pd.DataFrame({"value": [1, 2, 3, 4]})
+    after = pd.DataFrame({"value": [1, 4]})
+
+    comparison = _build_comparison(before, after)
+
+    assert comparison["health"]["row_delete_pct"] == 50.0
+    assert comparison["health"]["row_delete_penalty"] == 25.0
+    assert comparison["health"]["after_score"] == 75.0

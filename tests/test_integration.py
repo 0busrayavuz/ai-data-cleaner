@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from backend.main import app, _apply_selections_to_dataset_async
 from backend.database import (
     init_db, SessionLocal, Base, engine,
-    User, Project, Dataset, CleaningLog, QualityReport, PasswordResetToken,
+    User, Project, Dataset, CleaningLog, CleaningTemplate, QualityReport, PasswordResetToken,
 )
 
 client = TestClient(app)
@@ -99,6 +99,66 @@ def test_auth_and_forgot_password_flow():
     assert "güncellendi" in reset_resp.json()["message"]
 
     # 5. Check new login works
+    new_login_resp = client.post("/login", json={"email": email, "password": "newsecurepassword123"})
+    assert new_login_resp.status_code == 200
+
+
+def test_account_summary_and_password_change():
+    email = "test_account_settings@example.com"
+    password = "securepassword123"
+
+    client.post("/register", json={"email": email, "password": password})
+    token = client.post("/login", json={"email": email, "password": password}).json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    db = SessionLocal()
+    u = db.query(User).filter(User.email == email).first()
+    project = Project(user_id=u.id, name="Account Project", description="Summary test")
+    db.add(project)
+    db.flush()
+    dataset = Dataset(
+        user_id=u.id,
+        project_id=project.id,
+        filename="test_account_settings.csv",
+        original_filename="test_account_settings.csv",
+        format="CSV",
+        row_count=12,
+        col_count=3,
+        file_path="uploads/test_account_settings.csv",
+        status="ready",
+    )
+    template = CleaningTemplate(user_id=u.id, name="Account Template", selections_json="[]")
+    db.add_all([dataset, template])
+    db.commit()
+    db.close()
+
+    summary_resp = client.get("/me/account", headers=headers)
+    assert summary_resp.status_code == 200
+    summary = summary_resp.json()
+    assert summary["user"]["email"] == email
+    assert summary["usage"]["project_count"] == 1
+    assert summary["usage"]["dataset_count"] == 1
+    assert summary["usage"]["template_count"] == 1
+    assert summary["usage"]["total_rows_processed"] == 12
+    assert summary["limits"]["max_upload_mb"] == 20
+
+    bad_resp = client.post(
+        "/me/password",
+        json={"current_password": "wrong-password", "new_password": "newsecurepassword123"},
+        headers=headers,
+    )
+    assert bad_resp.status_code == 400
+
+    change_resp = client.post(
+        "/me/password",
+        json={"current_password": password, "new_password": "newsecurepassword123"},
+        headers=headers,
+    )
+    assert change_resp.status_code == 200
+    assert "güncellendi" in change_resp.json()["message"]
+
+    old_login_resp = client.post("/login", json={"email": email, "password": password})
+    assert old_login_resp.status_code == 401
     new_login_resp = client.post("/login", json={"email": email, "password": "newsecurepassword123"})
     assert new_login_resp.status_code == 200
 
