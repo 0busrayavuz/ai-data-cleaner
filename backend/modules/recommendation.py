@@ -79,11 +79,37 @@ def generate_recommendations(df: pd.DataFrame) -> dict:
             "options":  info["recommendations"],
         })
 
+    # ── Duplicate satır önerileri ──
+    duplicate_count = int(df.duplicated().sum())
+    if duplicate_count > 0:
+        recommendations.append({
+            "id":       "duplicate_rows",
+            "category": "duplicate",
+            "column":   "__all__",
+            "summary":  f"Veri setinde {duplicate_count} adet tamamen aynı (duplicate) satır tespit edildi.",
+            "severity": "medium" if duplicate_count < 50 else "high",
+            "options": [
+                {
+                    "id": "drop_duplicates",
+                    "name": "Tekrar Eden Satırları Sil",
+                    "desc": f"Birebir aynı olan {duplicate_count} satırı silerek veriyi tekilleştirir. İlk geçen satır korunur.",
+                    "tags": ["Temiz", "Hızlı"]
+                },
+                {
+                    "id": "keep_duplicates",
+                    "name": "Olduğu Gibi Bırak",
+                    "desc": "Duplicate satırlar korunur, sadece raporlanır.",
+                    "tags": ["Güvenli", "Varsayılan"]
+                },
+            ],
+        })
+
     return {
         "total":           len(recommendations),
         "missing_count":   len(missing_analysis),
         "outlier_count":   len(outlier_analysis),
         "format_count":    len(format_analysis),
+        "duplicate_count": duplicate_count,
         "recommendations": recommendations,
     }
 

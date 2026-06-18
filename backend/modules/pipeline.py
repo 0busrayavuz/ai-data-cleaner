@@ -53,8 +53,20 @@ def run_pipeline(df: pd.DataFrame, selections: list[dict]) -> dict:
             elif category == "feature":
                 current_df, detail = apply_feature_engineering(current_df, column, method)
 
+            elif category == "duplicate":
+                before_len = len(current_df)
+                if method == "drop_duplicates":
+                    current_df = current_df.drop_duplicates()
+                    dropped = before_len - len(current_df)
+                    detail = f"{dropped} adet tekrar eden (duplicate) satır silindi."
+                elif method == "keep_duplicates":
+                    detail = "Duplicate satırlar korundu, değişiklik yapılmadı."
+                else:
+                    raise ValueError(f"Bilinmeyen duplicate yöntemi: {method}")
+
             else:
                 raise ValueError(f"Bilinmeyen kategori: {category}")
+
 
             logs.append({
                 "status":    "ok",
