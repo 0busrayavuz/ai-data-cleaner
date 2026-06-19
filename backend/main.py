@@ -12,6 +12,13 @@ Tüm endpoint iş mantığı backend/routers/ altındaki dosyalara,
 paylaşılan yardımcı fonksiyonlar backend/core/ altındaki dosyalara taşınmıştır.
 """
 import os
+from datetime import datetime
+
+from backend.core.logging_config import configure_logging, get_logger
+
+# Logging'i mümkün olan en erken noktada yapılandır
+configure_logging()
+logger = get_logger(__name__)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -79,19 +86,30 @@ def startup():
     init_db()
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+
     # Çökmüş durumda kalan işlemleri hata olarak işaretle
     # Startup sırasında Depends kulınamaz — SessionLocal() burada kabul edilebilir
     try:
-        from backend.database import SessionLocal
+        from backend.database import SessionLocal, PasswordResetToken
         with SessionLocal() as db:
+            # 1. Yarım kalan işlemleri error'a al
             stuck = db.query(Dataset).filter(Dataset.status.in_(["processing", "analyzing"])).all()
             for ds in stuck:
                 ds.status = "error"
+
+            # 2. Süresi dolmuş şifre sıfırlama token'larını temizle
+            deleted = db.query(PasswordResetToken).filter(
+                PasswordResetToken.expires_at < datetime.utcnow()
+            ).delete(synchronize_session=False)
+
             db.commit()
+
             if stuck:
-                print(f"[Startup] Reset {len(stuck)} stuck dataset(s) to 'error'.")
+                logger.info("Startup: %d takılı veri seti 'error' durumuna alındı.", len(stuck))
+            if deleted:
+                logger.info("Startup: %d süresi dolmuş şifre sıfırlama token'ı temizlendi.", deleted)
     except Exception as _e:
-        print(f"[Startup] Recovery query failed (non-fatal): {_e}")
+        logger.warning("Startup kurtarma sorgusu başarısız (kritik değil): %s", _e)
 
 # ── Router kayıtları ──────────────────────────────────────────────────────────
 # Tüm endpoint'ler /api/v1/ prefix'i altında toplanır.

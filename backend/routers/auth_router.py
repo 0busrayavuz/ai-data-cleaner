@@ -5,6 +5,7 @@ Endpoint'ler: /register, /login, /me, /me/account,
 """
 from __future__ import annotations
 
+import logging
 import os
 import re
 import uuid
@@ -19,6 +20,8 @@ from sqlalchemy.orm import Session
 from backend.auth import create_access_token, get_current_user, get_password_hash, verify_password
 from backend.database import Dataset, CleaningTemplate, PasswordResetToken, Project, SessionLocal, User, get_db
 from backend.core.helpers import cleaned_disk_path
+
+logger = logging.getLogger(__name__)
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -68,7 +71,7 @@ def send_reset_email(to_email: str, token: str) -> bool:
     smtp_pass = os.getenv("SMTP_PASSWORD")
 
     if not smtp_host or not smtp_user or not smtp_pass:
-        print(f"\n[DEVELOPMENT ONLY] Password reset token for {to_email}: {token}\n")
+        logger.info("[DEV] E-posta gönderimi yok — şifre sıfırlama token'u: %s -> %s", to_email, token)
         return False
 
     try:
@@ -102,8 +105,8 @@ def send_reset_email(to_email: str, token: str) -> bool:
         server.quit()
         return True
     except Exception as e:
-        print(f"[SMTP ERROR] Failed to send email to {to_email}: {e}")
-        print(f"\n[FALLBACK] Password reset token for {to_email}: {token}\n")
+        logger.error("SMTP gönderimi başarısız (%s): %s", to_email, e)
+        logger.info("[FALLBACK] Şifre sıfırlama token'u: %s -> %s", to_email, token)
         return False
 
 

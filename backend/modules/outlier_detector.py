@@ -4,6 +4,9 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def analyze_outliers(df: pd.DataFrame) -> dict:
@@ -47,7 +50,8 @@ def analyze_outliers(df: pd.DataFrame) -> dict:
             dbscan = DBSCAN(eps=2.5, min_samples=max(3, len(df_numeric) // 100))
             db_labels = dbscan.fit_predict(scaled_data)
             dbscan_outlier_indices = df_numeric.index[db_labels == -1].tolist()
-        except:
+        except Exception as e:
+            logger.warning("DBSCAN analizi başarısız (dataset boyutu=%d): %s", len(df_numeric), e)
             dbscan_outlier_indices = []
     else:
         dbscan_outlier_indices = []

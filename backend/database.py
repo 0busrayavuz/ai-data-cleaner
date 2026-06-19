@@ -3,6 +3,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./cleaner_dev.db")
 
@@ -120,7 +123,7 @@ def run_light_migrations():
                     if to_add_status:
                         conn.execute(text("ALTER TABLE datasets ADD COLUMN status VARCHAR DEFAULT 'ready'"))
     except Exception as e:
-        print(f"[Migration Warning] Failed to update datasets columns: {e}")
+        logger.warning("[Migration] datasets sütun güncellemesi başarısız: %s", e)
 
     # 2. Update cleaning_logs columns
     try:
@@ -131,7 +134,7 @@ def run_light_migrations():
                 with engine.begin() as conn:
                     conn.execute(text("ALTER TABLE cleaning_logs ADD COLUMN user_id INTEGER"))
     except Exception as e:
-        print(f"[Migration Warning] Failed to update cleaning_logs columns: {e}")
+        logger.warning("[Migration] cleaning_logs sütun güncellemesi başarısız: %s", e)
 
     # Add constraints on PostgreSQL if they don't exist
     if not is_sqlite:
@@ -159,7 +162,7 @@ def run_light_migrations():
                             "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
                         ))
         except Exception as e:
-            print(f"[Migration Warning] Failed to add datasets user FK: {e}")
+            logger.warning("[Migration] datasets user FK eklenemedi: %s", e)
 
         # ── cleaning_logs dataset FK ─────────────────────────────────────
         try:
@@ -183,7 +186,7 @@ def run_light_migrations():
                             "FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE CASCADE"
                         ))
         except Exception as e:
-            print(f"[Migration Warning] Failed to add cleaning_logs dataset FK: {e}")
+            logger.warning("[Migration] cleaning_logs dataset FK eklenemedi: %s", e)
 
         # ── cleaning_logs user FK ────────────────────────────────────────
         try:
@@ -207,7 +210,7 @@ def run_light_migrations():
                             "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
                         ))
         except Exception as e:
-            print(f"[Migration Warning] Failed to add cleaning_logs user FK: {e}")
+            logger.warning("[Migration] cleaning_logs user FK eklenemedi: %s", e)
 
         # ── quality_reports.dataset_id FK ────────────────────────────────
         try:
@@ -231,7 +234,7 @@ def run_light_migrations():
                             "FOREIGN KEY (dataset_id) REFERENCES datasets(id) ON DELETE CASCADE"
                         ))
         except Exception as e:
-            print(f"[Migration Warning] Failed to add quality_reports dataset FK: {e}")
+            logger.warning("[Migration] quality_reports dataset FK eklenemedi: %s", e)
 
         # ── NOT NULL enforcement — user_id ────────────────────────────────
         def _enforce_not_null_user_id(table: str, col_dict: dict) -> None:
@@ -251,21 +254,22 @@ def run_light_migrations():
                                     f"UPDATE {table} SET user_id = (SELECT id FROM users LIMIT 1) "
                                     f"WHERE user_id IS NULL"
                                 ))
-                                print(
-                                    f"[Migration] Assigned {null_count} NULL-user_id row(s) in "
-                                    f"'{table}' to the only existing user."
+                                logger.info(
+                                    "[Migration] '%s' tablosundaki %d NULL user_id satır(lar)ı tek mevcut kullanıcıya atandı.",
+                                    table, null_count,
                                 )
                             else:
-                                print(
-                                    f"[Migration WARNING] '{table}' has {null_count} row(s) with "
-                                    f"NULL user_id and {user_count} users exist — cannot determine "
-                                    f"ownership automatically.  NOT NULL constraint NOT applied. "
-                                    f"Resolve manually: UPDATE {table} SET user_id = <id> WHERE user_id IS NULL;"
+                                logger.warning(
+                                    "[Migration] '%s' tablosunda %d NULL user_id satırı var "
+                                    "ve %d kullanıcı mevcut — sahiplik belirlenemiyor. "
+                                    "NOT NULL kuralı uygulanmadı. "
+                                    "Manuel düzeltme: UPDATE %s SET user_id = <id> WHERE user_id IS NULL;",
+                                    table, null_count, user_count, table,
                                 )
                                 return  # Skip NOT NULL — would break data
                         conn.execute(text(f"ALTER TABLE {table} ALTER COLUMN user_id SET NOT NULL"))
                 except Exception as e:
-                    print(f"[Migration Warning] Failed to set {table}.user_id NOT NULL: {e}")
+                    logger.warning("[Migration] %s.user_id NOT NULL ayarlanamadı: %s", table, e)
 
         try:
             inspector = inspect(engine)
@@ -274,7 +278,7 @@ def run_light_migrations():
                 if "user_id" in d_cols:
                     _enforce_not_null_user_id("datasets", d_cols["user_id"])
         except Exception as e:
-            print(f"[Migration Warning] datasets NOT NULL check failed: {e}")
+            logger.warning("[Migration] datasets NOT NULL kontrolü başarısız: %s", e)
 
         try:
             inspector = inspect(engine)
@@ -283,7 +287,7 @@ def run_light_migrations():
                 if "user_id" in l_cols:
                     _enforce_not_null_user_id("cleaning_logs", l_cols["user_id"])
         except Exception as e:
-            print(f"[Migration Warning] cleaning_logs NOT NULL check failed: {e}")
+            logger.warning("[Migration] cleaning_logs NOT NULL kontrolü başarısız: %s", e)
 
         # ── NOT NULL enforcement — dataset_id (cleaning_logs) ────────────
         try:
@@ -297,7 +301,7 @@ def run_light_migrations():
                             "ALTER TABLE cleaning_logs ALTER COLUMN dataset_id SET NOT NULL"
                         ))
         except Exception as e:
-            print(f"[Migration Warning] Failed to set cleaning_logs.dataset_id NOT NULL: {e}")
+            logger.warning("[Migration] cleaning_logs.dataset_id NOT NULL ayarlanamadı: %s", e)
 
         # ── NOT NULL enforcement — dataset_id (quality_reports) ──────────
         try:
@@ -311,7 +315,7 @@ def run_light_migrations():
                             "ALTER TABLE quality_reports ALTER COLUMN dataset_id SET NOT NULL"
                         ))
         except Exception as e:
-            print(f"[Migration Warning] Failed to set quality_reports.dataset_id NOT NULL: {e}")
+            logger.warning("[Migration] quality_reports.dataset_id NOT NULL ayarlanamadı: %s", e)
 
 
 
@@ -320,7 +324,7 @@ def run_light_migrations():
 def init_db():
     Base.metadata.create_all(bind=engine)
     run_light_migrations()
-    print("[DB] Tablolar hazır.")
+    logger.info("[DB] Tablolar hazır.")
 
 
 def get_db():

@@ -8,6 +8,9 @@ import json
 import os
 import shutil
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 from backend.core.constants import OUTPUT_DIR
 from backend.core.helpers import calculate_dataframe_health, health_score_with_row_deletion_penalty
@@ -38,6 +41,7 @@ def _run_analysis_async(dataset_id: int, user_id: int) -> None:
         dataset.status = "ready"
         db.commit()
     except Exception:
+        logger.exception("Analiz görevi başarısız (dataset_id=%s)", dataset_id)
         db.rollback()
         try:
             dataset = db.query(Dataset).filter(
@@ -47,7 +51,7 @@ def _run_analysis_async(dataset_id: int, user_id: int) -> None:
                 dataset.status = "error"
                 db.commit()
         except Exception:
-            pass
+            logger.exception("Analiz hata durumu kaydedilemedi (dataset_id=%s)", dataset_id)
     finally:
         db.close()
 
@@ -204,6 +208,7 @@ def _apply_selections_to_dataset_async(
                 db.close()
 
         except Exception:
+            logger.exception("Temizleme görevi başarısız (dataset_id=%s)", dataset_id)
             db_err_status = SessionLocal()
             try:
                 ds = db_err_status.query(Dataset).filter(Dataset.id == dataset_id).first()
@@ -211,7 +216,7 @@ def _apply_selections_to_dataset_async(
                     ds.status = "error"
                     db_err_status.commit()
             except Exception:
-                pass
+                logger.exception("Temizleme hata durumu kaydedilemedi (dataset_id=%s)", dataset_id)
             finally:
                 db_err_status.close()
 
@@ -220,7 +225,7 @@ def _apply_selections_to_dataset_async(
                     try:
                         os.remove(path)
                     except Exception:
-                        pass
+                        logger.warning("Geçici dosya silinemedi: %s", path)
 
 
 def _apply_template_async(dataset_id: int, user_id: int, raw_selections: list) -> None:

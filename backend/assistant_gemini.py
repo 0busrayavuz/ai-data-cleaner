@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
@@ -10,6 +11,8 @@ import requests
 from backend.environment import load_project_env
 
 load_project_env()
+
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """Sen VeriTemiz AI adlı veri temizleme ve özellik mühendisliği web uygulamasının yardımcı asistanısın.
 Kullanıcıya Türkçe, kısa ve net yanıtlar ver. Uydurma: platformda olmayan özellikleri varmış gibi anlatma.
