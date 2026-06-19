@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
   ArrowRight,
@@ -8,7 +8,6 @@ import {
   Database,
   FileSearch,
   GitCompareArrows,
-  RefreshCw,
   Rows3,
   Sparkles,
   TableProperties,
@@ -72,27 +71,59 @@ const DATASET_STATUS_LABELS = {
 
 const numberFormat = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 2 });
 
+/* ── AnimatedCounter ─────────────────────────────────────────────────────── */
+function AnimatedCounter({ value, duration = 900 }) {
+  const [display, setDisplay] = useState(0);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const target = Number(value) || 0;
+    const start = Date.now();
+    const startVal = 0;
+
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(startVal + (target - startVal) * eased);
+      setDisplay(current);
+      if (progress < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [value, duration]);
+
+  return <>{numberFormat.format(display)}</>;
+}
+
+/* ── Helpers ─────────────────────────────────────────────────────────────── */
 function getWorkspaceSourceInfo(view, workspace) {
   if (view === 'studio') {
     return {
       title: 'Kaynak: ham veri analizi',
-      description: 'Öneriler yüklenen ham dosya üzerinden gerçek analiz sonucu üretilir; kullanıcı onayı olmadan veri değiştirilmez.',
+      description:
+        'Öneriler yüklenen ham dosya üzerinden gerçek analiz sonucu üretilir; kullanıcı onayı olmadan veri değiştirilmez.',
     };
   }
   if (view === 'comparison') {
     return workspace?.comparison
       ? {
           title: 'Kaynak: ham veri + son temizlenmiş çıktı',
-          description: 'Karşılaştırma, yüklenen ham dosya ile diskteki son temizlenmiş CSV çıktısından hesaplanır.',
+          description:
+            'Karşılaştırma, yüklenen ham dosya ile diskteki son temizlenmiş CSV çıktısından hesaplanır.',
         }
       : {
           title: 'Kaynak bekleniyor',
-          description: 'Karşılaştırma ekranı için önce Temizlik Stüdyosu’nda en az bir işlem uygulanmalıdır.',
+          description:
+            "Karşılaştırma ekranı için önce Temizlik Stüdyosu'nda en az bir işlem uygulanmalıdır.",
         };
   }
   return {
     title: 'Kaynak: yüklenen ham dosya',
-    description: 'Profil metrikleri, dağılımlar ve ön izleme doğrudan yüklenen orijinal veri setinden hesaplanır.',
+    description:
+      'Profil metrikleri, dağılımlar ve ön izleme doğrudan yüklenen orijinal veri setinden hesaplanır.',
   };
 }
 
@@ -106,6 +137,19 @@ function formatDatasetStatus(status) {
   return DATASET_STATUS_LABELS[status] || status || 'Bilinmiyor';
 }
 
+/* ── Loading dots ────────────────────────────────────────────────────────── */
+function LoadingDots({ label }) {
+  return (
+    <div className="workspace-loading glass-panel">
+      <div className="workspace-loading-dots">
+        <span /><span /><span />
+      </div>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+/* ── Main component ──────────────────────────────────────────────────────── */
 function DatasetWorkspace({
   view,
   selectedDatasetId,
@@ -142,16 +186,11 @@ function DatasetWorkspace({
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [onDatasetChange, refreshKey, selectedDatasetId]);
 
   useEffect(() => {
-    if (!selectedDatasetId) {
-      setWorkspace(null);
-      return;
-    }
+    if (!selectedDatasetId) { setWorkspace(null); return; }
     let cancelled = false;
     setLoading(true);
     setError('');
@@ -160,11 +199,11 @@ function DatasetWorkspace({
         if (cancelled) return;
         setWorkspace(payload);
         const firstColumn = payload.profile?.columns?.[0]?.name || '';
-        setSelectedColumn((current) => (
+        setSelectedColumn((current) =>
           payload.profile?.columns?.some((column) => column.name === current)
             ? current
-            : firstColumn
-        ));
+            : firstColumn,
+        );
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Çalışma alanı yüklenemedi.');
@@ -172,9 +211,7 @@ function DatasetWorkspace({
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [selectedDatasetId, refreshKey]);
 
   useEffect(() => {
@@ -205,9 +242,7 @@ function DatasetWorkspace({
     };
 
     loadAnalysis();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [selectedDatasetId, view]);
 
   const selectedDataset = datasets.find((row) => row.id === Number(selectedDatasetId));
@@ -216,10 +251,7 @@ function DatasetWorkspace({
   const sourceInfo = workspace ? getWorkspaceSourceInfo(view, workspace) : null;
 
   const handleApply = (selections) => applyClean(selectedDatasetId, selections);
-
-  const handleApplied = () => {
-    setRefreshKey((key) => key + 1);
-  };
+  const handleApplied = () => { setRefreshKey((key) => key + 1); };
 
   if (!loading && datasets.length === 0) {
     return (
@@ -235,7 +267,8 @@ function DatasetWorkspace({
   }
 
   return (
-    <div className="workspace-page">
+    <div className={`workspace-page view-${view}`}>
+      {/* ── Hero ── */}
       <header className="workspace-hero">
         <div className="workspace-heading">
           <span className="workspace-icon"><HeaderIcon size={24} /></span>
@@ -245,6 +278,7 @@ function DatasetWorkspace({
             <p>{meta.description}</p>
           </div>
         </div>
+
         <div className="workspace-dataset-picker">
           <label htmlFor="workspace-dataset">Aktif veri seti</label>
           <select
@@ -259,11 +293,14 @@ function DatasetWorkspace({
             ))}
           </select>
           {selectedDataset && (
-            <span>{formatValue(selectedDataset.row_count)} satır · {formatValue(selectedDataset.col_count)} sütun</span>
+            <span>
+              {formatValue(selectedDataset.row_count)} satır · {formatValue(selectedDataset.col_count)} sütun
+            </span>
           )}
         </div>
       </header>
 
+      {/* ── Tabs ── */}
       <nav className="workspace-tabs" aria-label="Veri çalışma ekranları">
         {VIEW_TABS.map((tab) => {
           const TabIcon = tab.icon;
@@ -271,6 +308,7 @@ function DatasetWorkspace({
             <button
               key={tab.id}
               type="button"
+              data-tab={tab.id}
               className={view === tab.id ? 'active' : ''}
               onClick={() => onNavigate(tab.id)}
             >
@@ -281,6 +319,7 @@ function DatasetWorkspace({
         })}
       </nav>
 
+      {/* ── Source strip ── */}
       {!loading && workspace && sourceInfo && (
         <section className="workspace-source-strip glass-panel">
           <div>
@@ -294,6 +333,7 @@ function DatasetWorkspace({
         </section>
       )}
 
+      {/* ── Error ── */}
       {error && (
         <div className="workspace-alert error">
           <TriangleAlert size={19} />
@@ -301,13 +341,10 @@ function DatasetWorkspace({
         </div>
       )}
 
-      {loading && (
-        <div className="workspace-loading glass-panel">
-          <RefreshCw size={22} className="workspace-spin" />
-          Veri seti hazırlanıyor…
-        </div>
-      )}
+      {/* ── Loading ── */}
+      {loading && <LoadingDots label="Veri seti hazırlanıyor…" />}
 
+      {/* ── Profile view ── */}
       {!loading && workspace && view === 'profile' && (
         <ProfileView
           profile={workspace.profile}
@@ -316,20 +353,24 @@ function DatasetWorkspace({
         />
       )}
 
+      {/* ── Studio view ── */}
       {!loading && workspace && view === 'studio' && (
         <section className="workspace-studio">
           <div className="workspace-context-strip">
             <div>
-              <Sparkles size={18} />
-              <span><strong>{recommendations.length}</strong> karar önerisi</span>
+              <Sparkles size={18} color="#0c8f72" />
+              <span>
+                <strong>{recommendations.length}</strong>
+                <small style={{ display: 'inline', marginLeft: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  karar önerisi
+                </small>
+              </span>
             </div>
             <p>Öneriler gerçek analizden gelir; yöntemler otomatik uygulanmaz, son karar kullanıcıya aittir.</p>
           </div>
+
           {analysisLoading ? (
-            <div className="workspace-loading glass-panel">
-              <RefreshCw size={22} className="workspace-spin" />
-              Kalite sorunları ve yöntemler hazırlanıyor…
-            </div>
+            <LoadingDots label="Kalite sorunları ve yöntemler hazırlanıyor…" />
           ) : recommendations.length > 0 ? (
             <AnalysisResults
               key={`${selectedDatasetId}-${refreshKey}`}
@@ -344,7 +385,7 @@ function DatasetWorkspace({
             />
           ) : (
             <div className="workspace-empty glass-panel">
-              <CheckCircle2 size={34} />
+              <CheckCircle2 size={38} />
               <h3>Uygulanacak öneri bulunamadı</h3>
               <p>Analiz bu veri setinde zorunlu bir temizleme önerisi üretmedi.</p>
             </div>
@@ -352,13 +393,18 @@ function DatasetWorkspace({
         </section>
       )}
 
+      {/* ── Comparison view ── */}
       {!loading && workspace && view === 'comparison' && (
-        <ComparisonView comparison={workspace.comparison} onOpenStudio={() => onNavigate('studio')} />
+        <ComparisonView
+          comparison={workspace.comparison}
+          onOpenStudio={() => onNavigate('studio')}
+        />
       )}
     </div>
   );
 }
 
+/* ── ProfileView ─────────────────────────────────────────────────────────── */
 function ProfileView({ profile, selectedColumn, onSelectColumn }) {
   const column = profile.columns.find((item) => item.name === selectedColumn) || profile.columns[0];
   const chartData = column?.kind === 'numeric' ? column.distribution : column?.top_values;
@@ -367,10 +413,10 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
   return (
     <div className="workspace-profile">
       <section className="workspace-metrics">
-        <MetricCard icon={Rows3} label="Satır" value={profile.row_count} tone="emerald" />
-        <MetricCard icon={Columns3} label="Sütun" value={profile.col_count} tone="blue" />
-        <MetricCard icon={TriangleAlert} label="Eksik hücre" value={profile.missing_cells} tone="amber" />
-        <MetricCard icon={TableProperties} label="Tekrar eden satır" value={profile.duplicate_rows} tone="purple" />
+        <MetricCard icon={Rows3} label="Satır" value={profile.row_count} tone="emerald" animate />
+        <MetricCard icon={Columns3} label="Sütun" value={profile.col_count} tone="blue" animate />
+        <MetricCard icon={TriangleAlert} label="Eksik hücre" value={profile.missing_cells} tone="amber" animate />
+        <MetricCard icon={TableProperties} label="Tekrar eden satır" value={profile.duplicate_rows} tone="purple" animate />
       </section>
 
       <section className="workspace-profile-grid">
@@ -393,7 +439,9 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
                   <strong>{item.name}</strong>
                   <small>{item.dtype}</small>
                 </span>
-                <span className={`workspace-kind ${item.kind}`}>{item.kind === 'numeric' ? 'Sayısal' : 'Kategorik'}</span>
+                <span className={`workspace-kind ${item.kind}`}>
+                  {item.kind === 'numeric' ? 'Sayısal' : 'Kategorik'}
+                </span>
                 <i style={{ '--complete': `${100 - item.missing_pct}%` }} />
                 <small>%{numberFormat.format(item.missing_pct)} eksik</small>
               </button>
@@ -409,7 +457,9 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
                   <span>Seçili sütun</span>
                   <h3>{column.name}</h3>
                 </div>
-                <span className={`workspace-kind ${column.kind}`}>{column.kind === 'numeric' ? 'Sayısal' : 'Kategorik'}</span>
+                <span className={`workspace-kind ${column.kind}`}>
+                  {column.kind === 'numeric' ? 'Sayısal' : 'Kategorik'}
+                </span>
               </div>
               <div className="workspace-detail-stats">
                 <div><span>Eksik</span><strong>{formatValue(column.missing_count)}</strong></div>
@@ -428,10 +478,17 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
                 {chartData?.length ? (
                   <ResponsiveContainer width="100%" height={260}>
                     <BarChart data={chartData} margin={{ top: 12, right: 8, left: -15, bottom: 48 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(16, 41, 35, 0.1)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(16, 41, 35, 0.08)" />
                       <XAxis dataKey="label" angle={-28} textAnchor="end" interval={0} tick={{ fontSize: 11 }} />
                       <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                      <Tooltip />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: 10,
+                          border: '1px solid rgba(12,143,114,0.2)',
+                          background: 'rgba(255,255,255,0.97)',
+                          fontSize: 12,
+                        }}
+                      />
                       <Bar dataKey="count" fill="#0c8f72" radius={[7, 7, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -451,7 +508,7 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
               <span>İlişki analizi</span>
               <h3>En güçlü korelasyonlar</h3>
             </div>
-            <Activity size={20} />
+            <Activity size={20} color="#0c8f72" />
           </div>
           {profile.correlations.length > 0 ? (
             <div className="workspace-correlation-list">
@@ -473,15 +530,16 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
   );
 }
 
+/* ── ComparisonView ──────────────────────────────────────────────────────── */
 function ComparisonView({ comparison, onOpenStudio }) {
   if (!comparison) {
     return (
       <section className="workspace-empty glass-panel">
         <GitCompareArrows size={36} />
         <h3>Karşılaştırma henüz hazır değil</h3>
-        <p>Önce Temizlik Stüdyosu’nda en az bir işlem uygulayın. Ham veri değiştirilmeden korunacaktır.</p>
+        <p>Önce Temizlik Stüdyosu'nda en az bir işlem uygulayın. Ham veri değiştirilmeden korunacaktır.</p>
         <button type="button" className="btn-primary" onClick={onOpenStudio}>
-          Temizlik Stüdyosu’na git <ArrowRight size={17} />
+          Temizlik Stüdyosu'na git <ArrowRight size={17} />
         </button>
       </section>
     );
@@ -493,9 +551,10 @@ function ComparisonView({ comparison, onOpenStudio }) {
     { name: 'Format', before: comparison.health.before.format, after: comparison.health.after.format },
   ];
   const improvement = comparison.health.after_score - comparison.health.before_score;
-  const improvementText = improvement > 0
-    ? `+${formatValue(improvement)} puan gelişim`
-    : improvement < 0
+  const improvementText =
+    improvement > 0
+      ? `+${formatValue(improvement)} puan gelişim`
+      : improvement < 0
       ? `${formatValue(improvement)} puan düşüş`
       : '0 puan değişim';
 
@@ -515,8 +574,14 @@ function ComparisonView({ comparison, onOpenStudio }) {
         </div>
         <div className="comparison-score changes glass-panel">
           <span>Değişen hücre</span>
-          <strong>{comparison.total_changed_cells == null ? '—' : formatValue(comparison.total_changed_cells)}</strong>
-          <small>{comparison.rows_aligned ? 'Satırlar aynı konumda karşılaştırıldı' : 'Satır silindiği için hücre bazında sayılmadı'}</small>
+          <strong>
+            {comparison.total_changed_cells == null ? '—' : formatValue(comparison.total_changed_cells)}
+          </strong>
+          <small>
+            {comparison.rows_aligned
+              ? 'Satırlar aynı konumda karşılaştırıldı'
+              : 'Satır silindiği için hücre bazında sayılmadı'}
+          </small>
         </div>
       </section>
 
@@ -524,10 +589,9 @@ function ComparisonView({ comparison, onOpenStudio }) {
         <div>
           <span><Activity size={18} /> Sağlık skoru nasıl okunur?</span>
           <p>
-            Skor, toplam hücre sayısına göre eksik veri, format problemi ve aykırı
-            değerlerin ağırlıklı cezası çıkarılarak hesaplanır. Aykırı değerler
-            hata olmak zorunda olmadığı için daha düşük ağırlıkla değerlendirilir.
-            Satır silme varsa ayrıca her %1 silme için 0.5 puan ceza uygulanır.
+            Skor, toplam hücre sayısına göre eksik veri, format problemi ve aykırı değerlerin ağırlıklı
+            cezası çıkarılarak hesaplanır. Aykırı değerler hata olmak zorunda olmadığı için daha düşük
+            ağırlıkla değerlendirilir. Satır silme varsa ayrıca her %1 silme için 0.5 puan ceza uygulanır.
           </p>
         </div>
         <div className="comparison-weight-list" aria-label="Health score ağırlıkları">
@@ -547,21 +611,29 @@ function ComparisonView({ comparison, onOpenStudio }) {
               <span>Kalite bileşenleri</span>
               <h3>Sorun sayısı değişimi</h3>
             </div>
-            <BarChart3 size={20} />
+            <BarChart3 size={20} color="#0c8f72" />
           </div>
           <ResponsiveContainer width="100%" height={310}>
             <BarChart data={healthChart} margin={{ top: 18, right: 12, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(16, 41, 35, 0.1)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(16, 41, 35, 0.08)" />
               <XAxis dataKey="name" />
               <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="before" name="Önce" fill="#d49162" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="after" name="Sonra" fill="#0c8f72" radius={[6, 6, 0, 0]} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 10,
+                  border: '1px solid rgba(12,143,114,0.15)',
+                  background: 'rgba(255,255,255,0.97)',
+                  fontSize: 12,
+                }}
+              />
+              <Bar dataKey="before" name="Önce" fill="#e07a5f" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="after"  name="Sonra" fill="#0c8f72" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
           <p className="comparison-method-note">
             Aykırı değerler önce ve sonra aynı başlangıç IQR sınırlarına göre ölçülür.
-            Ağırlıklar: eksik {comparison.weights.missing}, format {comparison.weights.format}, aykırı {comparison.weights.outlier}.
+            Ağırlıklar: eksik {comparison.weights.missing}, format {comparison.weights.format},
+            aykırı {comparison.weights.outlier}.
           </p>
         </div>
 
@@ -571,7 +643,7 @@ function ComparisonView({ comparison, onOpenStudio }) {
               <span>Yapısal etki</span>
               <h3>Tablo boyutu</h3>
             </div>
-            <TableProperties size={20} />
+            <TableProperties size={20} color="#0c8f72" />
           </div>
           <div className="comparison-structure-row">
             <span>Satır</span>
@@ -603,12 +675,9 @@ function ComparisonView({ comparison, onOpenStudio }) {
           <table className="workspace-data-table">
             <thead>
               <tr>
-                <th>Sütun</th>
-                <th>Tür</th>
-                <th>Eksik (önce)</th>
-                <th>Eksik (sonra)</th>
-                <th>Ortalama (önce)</th>
-                <th>Ortalama (sonra)</th>
+                <th>Sütun</th><th>Tür</th>
+                <th>Eksik (önce)</th><th>Eksik (sonra)</th>
+                <th>Ortalama (önce)</th><th>Ortalama (sonra)</th>
                 <th>Değişen hücre</th>
               </tr>
             </thead>
@@ -616,7 +685,11 @@ function ComparisonView({ comparison, onOpenStudio }) {
               {comparison.columns.map((column) => (
                 <tr key={column.name}>
                   <td><strong>{column.name}</strong></td>
-                  <td><span className={`workspace-kind ${column.kind}`}>{column.kind === 'numeric' ? 'Sayısal' : 'Kategorik'}</span></td>
+                  <td>
+                    <span className={`workspace-kind ${column.kind}`}>
+                      {column.kind === 'numeric' ? 'Sayısal' : 'Kategorik'}
+                    </span>
+                  </td>
                   <td>{formatValue(column.before_missing)}</td>
                   <td>{formatValue(column.after_missing)}</td>
                   <td>{formatValue(column.before_mean)}</td>
@@ -639,7 +712,9 @@ function ComparisonView({ comparison, onOpenStudio }) {
           </div>
           <div className="workspace-table-scroll">
             <table className="workspace-data-table">
-              <thead><tr><th>Satır</th><th>Sütun</th><th>Önce</th><th>Sonra</th></tr></thead>
+              <thead>
+                <tr><th>Satır</th><th>Sütun</th><th>Önce</th><th>Sonra</th></tr>
+              </thead>
               <tbody>
                 {comparison.changed_samples.map((item, index) => (
                   <tr key={`${item.row}-${item.column}-${index}`}>
@@ -658,27 +733,36 @@ function ComparisonView({ comparison, onOpenStudio }) {
   );
 }
 
-function MetricCard({ icon: Icon, label, value, tone }) {
+/* ── MetricCard ──────────────────────────────────────────────────────────── */
+function MetricCard({ icon: Icon, label, value, tone, animate = false }) {
   return (
     <div className={`workspace-metric glass-panel ${tone}`}>
       <span><Icon size={21} /></span>
-      <div><small>{label}</small><strong>{formatValue(value)}</strong></div>
+      <div>
+        <small>{label}</small>
+        <strong>
+          {animate ? <AnimatedCounter value={value} /> : formatValue(value)}
+        </strong>
+      </div>
     </div>
   );
 }
 
+/* ── PreviewTable ────────────────────────────────────────────────────────── */
 function PreviewTable({ title, rows }) {
   const columns = useMemo(() => Object.keys(rows?.[0] || {}), [rows]);
   return (
     <div className="workspace-preview glass-panel">
       <div className="workspace-panel-heading">
         <div><span>İlk kayıtlar</span><h3>{title}</h3></div>
-        <Database size={20} />
+        <Database size={20} color="#0c8f72" />
       </div>
       {rows?.length ? (
         <div className="workspace-table-scroll">
           <table className="workspace-data-table compact">
-            <thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr></thead>
+            <thead>
+              <tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr>
+            </thead>
             <tbody>
               {rows.map((row, index) => (
                 <tr key={index}>
@@ -688,7 +772,9 @@ function PreviewTable({ title, rows }) {
             </tbody>
           </table>
         </div>
-      ) : <p className="workspace-muted">Ön izleme için kayıt yok.</p>}
+      ) : (
+        <p className="workspace-muted">Ön izleme için kayıt yok.</p>
+      )}
     </div>
   );
 }
