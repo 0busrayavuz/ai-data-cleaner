@@ -1,78 +1,307 @@
 .faq-section {
-  padding: clamp(34px, 7vw, 82px) 0;
+  padding: clamp(50px, 8vw, 110px) 0;
+  position: relative;
 }
 
-.faq-header {
+.faq-container {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
-  align-items: end;
-  gap: 2rem;
-  margin-bottom: 28px;
+  grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: flex-start;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Sol Taraf (Başlık & Form) ── */
+
+.faq-header-side {
+  position: sticky;
+  top: 120px; /* Scroll olurken ekranda kalması için */
 }
 
 .faq-overline {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   color: var(--accent-primary);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  margin-bottom: 12px;
 }
 
-.faq-header h3 {
-  margin: 12px 0 0;
+.faq-header-side h3 {
+  margin: 0 0 16px;
   color: var(--text-primary);
-  font-size: clamp(2rem, 4vw, 3.35rem);
-  line-height: 1.07;
-  letter-spacing: -0.045em;
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
 }
 
-.faq-header p {
-  margin: 0;
+.faq-header-side p {
+  margin: 0 0 32px;
   color: var(--text-secondary);
-  font-size: 0.98rem;
-  line-height: 1.7;
-}
-
-.faq-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.9rem;
-}
-
-.faq-card {
-  padding: 1.25rem;
-  border-color: rgba(16, 41, 35, 0.08);
-}
-
-.faq-card h4 {
-  margin: 0 0 0.65rem;
-  color: var(--text-primary);
   font-size: 1rem;
-}
-
-.faq-card p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.86rem;
   line-height: 1.65;
 }
 
-@media (max-width: 900px) {
-  .faq-header {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
+/* Soru Sorma Kutusu */
+.faq-ask-box {
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(12, 143, 114, 0.15);
+  box-shadow: 0 12px 34px rgba(16, 41, 35, 0.04);
+}
 
-  .faq-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.faq-ask-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.faq-ask-icon {
+  color: var(--accent-primary);
+  margin-top: 2px;
+}
+
+.faq-ask-header strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.faq-ask-header span {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  margin-top: 3px;
+}
+
+.faq-ask-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.faq-ask-inputs {
+  display: flex;
+  gap: 12px;
+}
+
+.faq-ask-inputs input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 41, 35, 0.12);
+  background: white;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.faq-ask-inputs input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(12, 143, 114, 0.15);
+}
+
+.faq-ask-form textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(16, 41, 35, 0.12);
+  background: white;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  resize: vertical;
+  min-height: 90px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.faq-ask-form textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(12, 143, 114, 0.15);
+}
+
+.faq-ask-form .btn-primary {
+  padding: 12px 20px;
+  border-radius: 12px;
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+/* Başarı Mesajı */
+.faq-ask-success {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  background: rgba(12, 143, 114, 0.08);
+  border-radius: 14px;
+  border: 1px solid rgba(12, 143, 114, 0.15);
+  animation: faqSuccessEnter 0.4s var(--ease-out);
+}
+
+.faq-ask-success svg {
+  color: var(--accent-primary);
+  flex: 0 0 auto;
+}
+
+.faq-ask-success strong {
+  display: block;
+  color: var(--accent-primary);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.faq-ask-success span {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+@keyframes faqSuccessEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Sağ Taraf (Accordion) ── */
+
+.faq-accordion-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.faq-accordion-item {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(16, 41, 35, 0.08);
+  overflow: hidden; /* Animasyon için önemli */
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.faq-accordion-item:hover {
+  border-color: rgba(12, 143, 114, 0.25);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.faq-accordion-item.open {
+  background: white;
+  border-color: var(--accent-primary);
+  box-shadow: 0 12px 30px rgba(16, 35, 31, 0.05), inset 0 0 0 1px rgba(12, 143, 114, 0.1);
+}
+
+.faq-accordion-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+.faq-question-text {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.45;
+  padding-right: 16px;
+  transition: color 0.2s ease;
+}
+
+.faq-accordion-item.open .faq-question-text {
+  color: var(--accent-primary);
+}
+
+.faq-toggle-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(16, 41, 35, 0.04);
+  color: var(--text-secondary);
+  transition: transform 0.3s var(--ease-out), background 0.3s ease, color 0.3s ease;
+  flex: 0 0 auto;
+}
+
+.faq-accordion-item:hover .faq-toggle-icon {
+  background: rgba(12, 143, 114, 0.1);
+  color: var(--accent-primary);
+}
+
+.faq-accordion-item.open .faq-toggle-icon {
+  transform: rotate(180deg);
+  background: var(--accent-primary);
+  color: white;
+}
+
+/* CSS Grid ile pürüzsüz height animasyonu */
+.faq-accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s var(--ease-out);
+}
+
+.faq-accordion-item.open .faq-accordion-body {
+  grid-template-rows: 1fr;
+}
+
+.faq-answer-content {
+  overflow: hidden;
+}
+
+.faq-answer-content p {
+  margin: 0;
+  padding: 0 24px 24px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 960px) {
+  .faq-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .faq-header-side {
+    position: static;
+    margin-bottom: 1rem;
   }
 }
 
-@media (max-width: 560px) {
-  .faq-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 500px) {
+  .faq-ask-inputs {
+    flex-direction: column;
+  }
+  
+  .faq-accordion-header {
+    padding: 18px 16px;
+  }
+  
+  .faq-answer-content p {
+    padding: 0 16px 20px;
+  }
+  
+  .faq-question-text {
+    font-size: 0.95rem;
   }
 }

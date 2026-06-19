@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
   Database,
-  FileSearch,
-  GitCompareArrows,
   Home,
   LayoutDashboard,
   LogIn,
@@ -246,27 +244,13 @@ function App() {
                 </button>
                 <button
                   type="button"
-                  className={`nav-btn ${currentView === 'profile' ? 'active' : ''}`}
+                  className={`nav-btn ${
+                    ['profile', 'studio', 'comparison'].includes(currentView) ? 'active' : ''
+                  }`}
                   onClick={() => setCurrentView('profile')}
-                >
-                  <FileSearch size={16} aria-hidden />
-                  Veri Profili
-                </button>
-                <button
-                  type="button"
-                  className={`nav-btn ${currentView === 'studio' ? 'active' : ''}`}
-                  onClick={() => setCurrentView('studio')}
                 >
                   <WandSparkles size={16} aria-hidden />
                   Stüdyo
-                </button>
-                <button
-                  type="button"
-                  className={`nav-btn ${currentView === 'comparison' ? 'active' : ''}`}
-                  onClick={() => setCurrentView('comparison')}
-                >
-                  <GitCompareArrows size={16} aria-hidden />
-                  Karşılaştır
                 </button>
                 <button
                   type="button"

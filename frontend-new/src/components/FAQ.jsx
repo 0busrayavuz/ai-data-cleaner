@@ -1,4 +1,5 @@
-import { HelpCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { HelpCircle, ChevronDown, MessageCircle, Send, CheckCircle2 } from 'lucide-react';
 import './FAQ.css';
 
 const QUESTIONS = [
@@ -20,34 +21,147 @@ const QUESTIONS = [
   },
   {
     question: 'Temizlik işlemi ham dosyayı değiştirir mi?',
-    answer: 'Hayır. Yüklenen ham dosya korunur. Seçilen işlemler ayrı bir temizlenmiş CSV çıktısı üretir; yapılan işlemler de rapor ve denetim kaydı olarak saklanır.',
+    answer: 'Hayır. Yüklenen ham dosya her zaman orijinal haliyle korunur. Sistem, seçilen işlemleri uygular ve size ayrı bir temizlenmiş CSV çıktısı (ve isteğe bağlı bir kalite raporu) verir.',
   },
   {
     question: 'Yapay zeka bu projede nerede kullanılıyor?',
-    answer: 'Proje, eksik değer ve aykırı değer analizlerinde makine öğrenmesi yöntemlerinden yararlanır. Gemini destekli asistan ise kullanıcıya veri temizleme sürecinde yardımcı olan ek bir katmandır.',
+    answer: 'Proje, eksik değer tahmininde ve aykırı değerlerin tespitinde makine öğrenmesi yöntemlerinden (örneğin KNN) yararlanır. Ayrıca entegre Gemini asistanımız temizleme sürecinde size rehberlik eder.',
   },
 ];
 
-const FAQ = () => (
-  <section className="faq-section" aria-labelledby="faq-heading">
-    <div className="faq-header">
-      <span className="faq-overline"><HelpCircle size={15} /> Soru-cevap</span>
-      <h3 id="faq-heading">Veri temizleme kavramları daha anlaşılır olsun.</h3>
-      <p>
-        Sağlık skoru, aykırı değer ve eksik veri tamamlama gibi kavramlar karar verirken önemlidir.
-        Bu bölüm, sistemin neyi neden önerdiğini sade bir dille açıklar.
-      </p>
-    </div>
+const FAQ = () => {
+  // İlk soruyu varsayılan olarak açık tutalım
+  const [openIndex, setOpenIndex] = useState(0);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    question: '',
+  });
+  const [isSending, setIsSending] = useState(false);
+  const [isSent, setIsSent] = useState(false);
 
-    <div className="faq-grid">
-      {QUESTIONS.map((item) => (
-        <article className="faq-card glass-panel" key={item.question}>
-          <h4>{item.question}</h4>
-          <p>{item.answer}</p>
-        </article>
-      ))}
-    </div>
-  </section>
-);
+  const handleToggle = (index) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !formData.email.trim() || !formData.question.trim()) return;
+    
+    setIsSending(true);
+    // Gerçek bir API olmadığı için animasyonlu bir bekleme simülasyonu yapıyoruz
+    setTimeout(() => {
+      setIsSending(false);
+      setIsSent(true);
+      setFormData({ name: '', email: '', question: '' });
+      
+      // 5 saniye sonra formu eski haline getir
+      setTimeout(() => setIsSent(false), 5000);
+    }, 800);
+  };
+
+  return (
+    <section className="faq-section" aria-labelledby="faq-heading">
+      <div className="faq-container">
+        
+        {/* Sol Taraf - Başlık ve Soru Sorma Kutusu */}
+        <div className="faq-header-side">
+          <span className="faq-overline"><HelpCircle size={16} /> Sıkça Sorulan Sorular</span>
+          <h3 id="faq-heading">Aklınızdaki soruları yanıtlıyoruz.</h3>
+          <p>
+            Veri temizleme süreçleri, algoritmaların nasıl karar verdiği ve verilerinizin güvenliği hakkında merak ettiklerinizi burada bulabilirsiniz.
+          </p>
+          
+          <div className="faq-ask-box glass-panel">
+            <div className="faq-ask-header">
+              <MessageCircle size={20} className="faq-ask-icon" />
+              <div>
+                <strong>Cevabını bulamadınız mı?</strong>
+                <span>Bize hemen sorun, uzmanlarımız yanıtlasın.</span>
+              </div>
+            </div>
+
+            {isSent ? (
+               <div className="faq-ask-success">
+                 <CheckCircle2 size={24} />
+                 <div>
+                   <strong>Mesajınız ulaştı!</strong>
+                   <span>Size en kısa sürede dönüş yapacağız.</span>
+                 </div>
+               </div>
+            ) : (
+              <form onSubmit={handleSend} className="faq-ask-form">
+                <div className="faq-ask-inputs">
+                  <input 
+                    type="text" 
+                    placeholder="Adınız Soyadınız" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    required 
+                  />
+                  <input 
+                    type="email" 
+                    placeholder="E-posta Adresiniz" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    required 
+                  />
+                </div>
+                <textarea 
+                  placeholder="Merak ettiğiniz konuyu buraya yazın..."
+                  value={formData.question}
+                  onChange={(e) => setFormData({...formData, question: e.target.value})}
+                  rows={3}
+                  required
+                />
+                <button 
+                  type="submit" 
+                  className="btn-primary" 
+                  disabled={!formData.name.trim() || !formData.email.trim() || !formData.question.trim() || isSending}
+                >
+                  {isSending ? 'Gönderiliyor...' : (
+                    <><Send size={15} /> Gönder</>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        {/* Sağ Taraf - Accordion SSS */}
+        <div className="faq-accordion-side">
+          {QUESTIONS.map((item, index) => {
+            const isOpen = openIndex === index;
+            return (
+              <div 
+                className={`faq-accordion-item glass-panel ${isOpen ? 'open' : ''}`} 
+                key={index}
+              >
+                <button 
+                  type="button" 
+                  className="faq-accordion-header"
+                  onClick={() => handleToggle(index)}
+                  aria-expanded={isOpen}
+                >
+                  <span className="faq-question-text">{item.question}</span>
+                  <span className="faq-toggle-icon">
+                    <ChevronDown size={18} />
+                  </span>
+                </button>
+                {/* CSS Grid numarasıyla height animasyonu */}
+                <div className="faq-accordion-body">
+                  <div className="faq-answer-content">
+                    <p>{item.answer}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+      </div>
+    </section>
+  );
+};
 
 export default FAQ;
