@@ -61,10 +61,19 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
   const formatDate = (iso) => {
     if (!iso) return '—';
     try {
-      return new Date(iso).toLocaleString('tr-TR');
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return '—';
+      return d.toLocaleString('tr-TR');
     } catch {
       return iso;
     }
+  };
+
+  const formatNum = (value) => {
+    if (value == null) return '0';
+    const num = Number(value);
+    if (Number.isNaN(num) || !Number.isFinite(num)) return '0';
+    return num.toLocaleString('tr-TR');
   };
 
   const handleDownload = async (row) => {
@@ -171,35 +180,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
         <p className="dashboard-subtitle">Yükleniyor…</p>
       ) : (
         <>
-          <section className="dashboard-stats">
-            <div className="stat-card glass-panel">
-              <div className="stat-icon-wrapper blue">
-                <Database size={24} />
-              </div>
-              <div className="stat-info">
-                <h3>Toplam işlenen satır</h3>
-                <p className="stat-value">{stats.total_rows_processed.toLocaleString('tr-TR')}</p>
-              </div>
-            </div>
-            <div className="stat-card glass-panel">
-              <div className="stat-icon-wrapper purple">
-                <Activity size={24} />
-              </div>
-              <div className="stat-info">
-                <h3>Listelenen veri seti</h3>
-                <p className="stat-value">{stats.dataset_count}</p>
-              </div>
-            </div>
-            <div className="stat-card glass-panel">
-              <div className="stat-icon-wrapper pink">
-                <Clock size={24} />
-              </div>
-              <div className="stat-info">
-                <h3>Temizlenmiş çıktı</h3>
-                <p className="stat-value">{stats.cleaned_dataset_count}</p>
-              </div>
-            </div>
-          </section>
+
 
           <section className="dashboard-history">
             <div className="history-header">
@@ -231,7 +212,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
                           {item.original_filename}
                         </td>
                         <td>{formatDate(item.upload_time)}</td>
-                        <td>{item.row_count != null ? item.row_count.toLocaleString('tr-TR') : '—'}</td>
+                        <td>{item.row_count != null ? formatNum(item.row_count) : '—'}</td>
                         <td>
                           {(() => {
                             const s = item.status;

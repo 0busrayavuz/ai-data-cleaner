@@ -1,4 +1,4 @@
-.dashboard-container {
+﻿.dashboard-container {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -18,11 +18,11 @@
   background:
     radial-gradient(circle at 85% 20%, rgba(98, 214, 181, 0.16), transparent 26%),
     var(--surface-dark);
-  box-shadow: 0 22px 55px rgba(16, 41, 35, 0.18);
+  box-shadow: 0 22px 55px rgba(11, 26, 56, 0.18);
 }
 
 .dashboard-overline {
-  color: #7de0c5;
+  color: #00aeef;
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.11em;
@@ -95,7 +95,7 @@
   min-width: 230px;
   height: 40px;
   padding: 0 12px;
-  border: 1px solid rgba(16, 41, 35, 0.12);
+  border: 1px solid rgba(11, 26, 56, 0.12);
   border-radius: 8px;
   background: white;
   color: var(--text-primary);
@@ -106,7 +106,7 @@
 .dashboard-project-select:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(12, 143, 114, 0.11);
+  box-shadow: 0 0 0 3px rgba(0, 110, 168, 0.11);
 }
 
 .dashboard-stats {
@@ -148,8 +148,8 @@
 }
 
 .stat-icon-wrapper.pink {
-  color: #0c8f72;
-  background: rgba(12, 143, 114, 0.1);
+  color: #0070a8;
+  background: rgba(0, 110, 168, 0.1);
 }
 
 .stat-info h3 {
@@ -210,7 +210,7 @@
   gap: 6px;
   padding: 7px 10px;
   border-radius: 7px;
-  background: rgba(12, 143, 114, 0.08);
+  background: rgba(0, 110, 168, 0.08);
 }
 
 .history-table-container {
@@ -228,7 +228,7 @@
 
 .history-table th {
   padding: 13px 16px;
-  border-bottom: 1px solid rgba(16, 41, 35, 0.08);
+  border-bottom: 1px solid rgba(11, 26, 56, 0.08);
   color: var(--text-muted);
   background: #f8faf9;
   font-size: 0.69rem;
@@ -239,7 +239,7 @@
 
 .history-table td {
   padding: 15px 16px;
-  border-bottom: 1px solid rgba(16, 41, 35, 0.065);
+  border-bottom: 1px solid rgba(11, 26, 56, 0.065);
   color: var(--text-secondary);
   font-size: 0.82rem;
 }
@@ -249,7 +249,7 @@
 }
 
 .history-table tbody tr:hover {
-  background: rgba(12, 143, 114, 0.025);
+  background: rgba(0, 110, 168, 0.025);
 }
 
 .history-table tbody tr:last-child td {
@@ -287,7 +287,7 @@
 
 .status-badge.success {
   color: #08765f;
-  background: rgba(12, 143, 114, 0.09);
+  background: rgba(0, 110, 168, 0.09);
 }
 
 .status-badge.warning {
@@ -325,7 +325,7 @@
 
 .action-btn.download {
   color: #08765f;
-  background: rgba(12, 143, 114, 0.09);
+  background: rgba(0, 110, 168, 0.09);
 }
 
 .action-btn.download:hover {
@@ -357,7 +357,7 @@
   grid-template-columns: 155px 1fr;
   gap: 16px;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(16, 41, 35, 0.07);
+  border-bottom: 1px solid rgba(11, 26, 56, 0.07);
   font-size: 0.8rem;
 }
 

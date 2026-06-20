@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   UserRound,
   WandSparkles,
+  BarChart2
 } from 'lucide-react';
 import { changePassword, fetchAccountSummary } from '../services/api';
 import './AccountSettings.css';
@@ -38,7 +39,9 @@ function formatDate(value) {
 }
 
 function formatNumber(value) {
-  return Number(value || 0).toLocaleString('tr-TR');
+  const num = Number(value || 0);
+  if (Number.isNaN(num) || !Number.isFinite(num)) return '0';
+  return num.toLocaleString('tr-TR');
 }
 
 function getSessionLabel() {
@@ -65,6 +68,7 @@ function passwordStrengthLabel(password) {
 }
 
 const AccountSettings = ({ userEmail, onOpenPanel, onLogout }) => {
+  const [activeTab, setActiveTab] = useState('profile');
   const [account, setAccount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -147,222 +151,227 @@ const AccountSettings = ({ userEmail, onOpenPanel, onLogout }) => {
 
   return (
     <div className="account-container">
-      <header className="account-hero glass-panel">
-        <div className="account-avatar" aria-hidden>{getInitial(profileEmail)}</div>
-        <div className="account-hero-copy">
-          <span className="account-overline">Hesabım</span>
-          <h2>Hesap ve güvenlik ayarları</h2>
-          <p>
-            Giriş bilgilerinizi, oturum durumunuzu ve VeriTemiz AI kullanım özetinizi buradan yönetin.
-          </p>
+      <div className="account-header">
+        <div>
+          <h2>Hesap Ayarları</h2>
+          <p>Kişisel bilgilerinizi, güvenlik ayarlarınızı ve kullanım özetinizi yönetin.</p>
         </div>
-        <div className="account-hero-actions">
+        <div className="account-header-actions">
           <button type="button" className="account-secondary-btn" onClick={onOpenPanel}>
-            <Database size={17} aria-hidden />
-            Paneli aç
+            <Database size={16} aria-hidden /> Panel
           </button>
           <button type="button" className="account-danger-btn" onClick={onLogout}>
-            <LogOut size={17} aria-hidden />
-            Çıkış yap
+            <LogOut size={16} aria-hidden /> Çıkış yap
           </button>
         </div>
-      </header>
+      </div>
 
       {error && (
         <div className="account-alert error" role="alert">
           <AlertCircle size={18} aria-hidden />
           <span>{error}</span>
           <button type="button" onClick={loadAccount}>
-            <RefreshCw size={15} aria-hidden />
-            Tekrar dene
+            <RefreshCw size={15} aria-hidden /> Tekrar dene
           </button>
         </div>
       )}
 
       <div className="account-layout">
-        <section className="account-card glass-panel">
-          <div className="account-card-header">
-            <div className="account-card-icon">
-              <UserRound size={21} aria-hidden />
-            </div>
-            <div>
-              <h3>Profil bilgileri</h3>
-              <p>Hesabın sistemde kayıtlı gerçek bilgileri.</p>
-            </div>
-          </div>
+        {/* Sol Menü (Sidebar) */}
+        <nav className="account-sidebar" aria-label="Hesap menüsü">
+          <button
+            type="button"
+            className={`account-tab ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            <UserRound size={18} aria-hidden /> Profil
+          </button>
+          <button
+            type="button"
+            className={`account-tab ${activeTab === 'security' ? 'active' : ''}`}
+            onClick={() => setActiveTab('security')}
+          >
+            <ShieldCheck size={18} aria-hidden /> Güvenlik
+          </button>
+          <button
+            type="button"
+            className={`account-tab ${activeTab === 'usage' ? 'active' : ''}`}
+            onClick={() => setActiveTab('usage')}
+          >
+            <BarChart2 size={18} aria-hidden /> Kullanım Özeti
+          </button>
+        </nav>
 
+        {/* Sağ İçerik */}
+        <main className="account-content glass-panel">
           {loading ? (
-            <p className="account-muted">Hesap bilgileri yükleniyor...</p>
-          ) : (
-            <div className="account-info-list">
-              <div className="account-info-row">
-                <Mail size={18} aria-hidden />
-                <div>
-                  <span>E-posta adresi</span>
-                  <strong>{profileEmail || 'E-posta bulunamadı'}</strong>
-                  <small>Bu adres şu an giriş kimliğiniz olarak kullanılır.</small>
-                </div>
-              </div>
-              <div className="account-info-row">
-                <ShieldCheck size={18} aria-hidden />
-                <div>
-                  <span>Kullanıcı numarası</span>
-                  <strong>#{account?.user?.id ?? '-'}</strong>
-                  <small>Veri seti sahipliği bu kullanıcı kaydıyla eşleştirilir.</small>
-                </div>
-              </div>
-              <div className="account-info-row">
-                <Calendar size={18} aria-hidden />
-                <div>
-                  <span>Kayıt tarihi</span>
-                  <strong>{formatDate(account?.user?.created_at)}</strong>
-                </div>
-              </div>
-              <div className="account-info-row">
-                <Lock size={18} aria-hidden />
-                <div>
-                  <span>Oturum durumu</span>
-                  <strong>{getSessionLabel()}</strong>
-                </div>
-              </div>
+            <div className="account-loading">
+              <Loader className="spin" size={24} />
+              <p>Bilgiler yükleniyor...</p>
             </div>
-          )}
-        </section>
-
-        <section className="account-card glass-panel">
-          <div className="account-card-header">
-            <div className="account-card-icon">
-              <Database size={21} aria-hidden />
-            </div>
-            <div>
-              <h3>Kullanım özeti</h3>
-              <p>Panel ve analiz geçmişinden hesaplanan güncel değerler.</p>
-            </div>
-          </div>
-
-          {loading ? (
-            <p className="account-muted">Kullanım özeti yükleniyor...</p>
           ) : (
             <>
-              <div className="account-metrics">
-                {usageCards.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div className="account-metric" key={item.label}>
-                      <Icon size={18} aria-hidden />
-                      <span>{item.label}</span>
-                      <strong>{item.isText ? item.value : formatNumber(item.value)}</strong>
+              {activeTab === 'profile' && (
+                <div className="account-section">
+                  <div className="account-section-header">
+                    <h3>Profil bilgileri</h3>
+                    <p>Hesabınızın sistemde kayıtlı temel kimlik bilgileri.</p>
+                  </div>
+                  <div className="account-avatar-row">
+                    <div className="account-avatar-circle">{getInitial(profileEmail)}</div>
+                    <div className="account-avatar-info">
+                      <strong>{profileEmail || 'Bilinmeyen Kullanıcı'}</strong>
+                      <span>Kullanıcı ID: #{account?.user?.id ?? '-'}</span>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                  
+                  <div className="account-info-grid">
+                    <div className="account-info-box">
+                      <Mail size={18} />
+                      <div className="info-box-content">
+                        <span>E-posta adresi</span>
+                        <strong>{profileEmail || 'E-posta bulunamadı'}</strong>
+                      </div>
+                    </div>
+                    <div className="account-info-box">
+                      <Calendar size={18} />
+                      <div className="info-box-content">
+                        <span>Kayıt tarihi</span>
+                        <strong>{formatDate(account?.user?.created_at)}</strong>
+                      </div>
+                    </div>
+                    <div className="account-info-box">
+                      <Lock size={18} />
+                      <div className="info-box-content">
+                        <span>Oturum durumu</span>
+                        <strong>{getSessionLabel()}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              {usage?.status_counts && Object.keys(usage.status_counts).length > 0 && (
-                <div className="account-status-strip" aria-label="Veri seti durumları">
-                  {Object.entries(usage.status_counts).map(([key, value]) => (
-                    <span key={key}>
-                      {STATUS_LABELS[key] || key}: <strong>{value}</strong>
-                    </span>
-                  ))}
+              {activeTab === 'security' && (
+                <div className="account-section">
+                  <div className="account-section-header">
+                    <h3>Güvenlik ayarları</h3>
+                    <p>Şifrenizi güncelleyin ve hesap sınırlarınızı inceleyin.</p>
+                  </div>
+
+                  <div className="account-password-area">
+                    <h4>Şifre değiştir</h4>
+                    {passwordMessage && (
+                      <div className={`account-inline-message ${passwordMessage.type}`} role="alert">
+                        {passwordMessage.type === 'success' ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
+                        <span>{passwordMessage.text}</span>
+                      </div>
+                    )}
+                    <form className="account-password-form" onSubmit={handlePasswordSubmit} noValidate>
+                      <label className="account-field">
+                        <span>Mevcut şifre</span>
+                        <input
+                          type="password"
+                          autoComplete="current-password"
+                          value={form.currentPassword}
+                          onChange={(e) => setFormValue('currentPassword', e.target.value)}
+                          aria-invalid={!!fieldErrors.currentPassword}
+                        />
+                        {fieldErrors.currentPassword && <small>{fieldErrors.currentPassword}</small>}
+                      </label>
+
+                      <label className="account-field">
+                        <span>Yeni şifre</span>
+                        <input
+                          type="password"
+                          autoComplete="new-password"
+                          value={form.newPassword}
+                          onChange={(e) => setFormValue('newPassword', e.target.value)}
+                          aria-invalid={!!fieldErrors.newPassword}
+                        />
+                        {strength && <em>Güvenlik düzeyi: {strength}</em>}
+                        {fieldErrors.newPassword && <small>{fieldErrors.newPassword}</small>}
+                      </label>
+
+                      <label className="account-field">
+                        <span>Yeni şifre tekrar</span>
+                        <input
+                          type="password"
+                          autoComplete="new-password"
+                          value={form.confirmPassword}
+                          onChange={(e) => setFormValue('confirmPassword', e.target.value)}
+                          aria-invalid={!!fieldErrors.confirmPassword}
+                        />
+                        {fieldErrors.confirmPassword && <small>{fieldErrors.confirmPassword}</small>}
+                      </label>
+
+                      <div className="form-actions">
+                        <button type="submit" className="btn-primary account-submit-btn" disabled={changingPassword}>
+                          {changingPassword ? <Loader className="spin" size={16} aria-hidden /> : <KeyRound size={16} aria-hidden />}
+                          Şifreyi güncelle
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="account-limits-area">
+                    <h4>Hesap sınırları</h4>
+                    <ul className="account-limits-list">
+                      <li>
+                        <span className="limit-label">Yükleme sınırı</span>
+                        <span className="limit-value">{limits?.max_upload_mb || 20} MB</span>
+                      </li>
+                      <li>
+                        <span className="limit-label">Desteklenen formatlar</span>
+                        <span className="limit-value">{(limits?.supported_formats || ['CSV', 'XLSX', 'TXT']).join(', ')}</span>
+                      </li>
+                      <li>
+                        <span className="limit-label">Veri sahipliği</span>
+                        <span className="limit-value">Yalnızca oturumdaki kullanıcıya görünür.</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'usage' && (
+                <div className="account-section">
+                  <div className="account-section-header">
+                    <h3>Kullanım özeti</h3>
+                    <p>Hesabınızda gerçekleştirilen analiz ve işlemlerin toplam değerleri.</p>
+                  </div>
+
+                  <div className="account-metrics-grid">
+                    {usageCards.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <div className="account-metric-card" key={item.label}>
+                          <div className="metric-icon"><Icon size={18} aria-hidden /></div>
+                          <div className="metric-content">
+                            <span>{item.label}</span>
+                            <strong>{item.isText ? item.value : formatNumber(item.value)}</strong>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {usage?.status_counts && Object.keys(usage.status_counts).length > 0 && (
+                    <div className="account-status-summary">
+                      <h4>Veri seti durumları</h4>
+                      <div className="account-status-strip">
+                        {Object.entries(usage.status_counts).map(([key, value]) => (
+                          <span key={key}>
+                            {STATUS_LABELS[key] || key}: <strong>{value}</strong>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>
           )}
-        </section>
-
-        <section className="account-card account-security-card glass-panel">
-          <div className="account-card-header">
-            <div className="account-card-icon">
-              <KeyRound size={21} aria-hidden />
-            </div>
-            <div>
-              <h3>Şifre değiştir</h3>
-              <p>Yeni şifre kaydedilmeden önce mevcut şifreniz doğrulanır.</p>
-            </div>
-          </div>
-
-          {passwordMessage && (
-            <div className={`account-inline-message ${passwordMessage.type}`} role="alert">
-              {passwordMessage.type === 'success' ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
-              <span>{passwordMessage.text}</span>
-            </div>
-          )}
-
-          <form className="account-password-form" onSubmit={handlePasswordSubmit} noValidate>
-            <label className="account-field">
-              <span>Mevcut şifre</span>
-              <input
-                type="password"
-                autoComplete="current-password"
-                value={form.currentPassword}
-                onChange={(e) => setFormValue('currentPassword', e.target.value)}
-                aria-invalid={!!fieldErrors.currentPassword}
-              />
-              {fieldErrors.currentPassword && <small>{fieldErrors.currentPassword}</small>}
-            </label>
-
-            <label className="account-field">
-              <span>Yeni şifre</span>
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={form.newPassword}
-                onChange={(e) => setFormValue('newPassword', e.target.value)}
-                aria-invalid={!!fieldErrors.newPassword}
-              />
-              {strength && <em>Güvenlik düzeyi: {strength}</em>}
-              {fieldErrors.newPassword && <small>{fieldErrors.newPassword}</small>}
-            </label>
-
-            <label className="account-field">
-              <span>Yeni şifre tekrar</span>
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={form.confirmPassword}
-                onChange={(e) => setFormValue('confirmPassword', e.target.value)}
-                aria-invalid={!!fieldErrors.confirmPassword}
-              />
-              {fieldErrors.confirmPassword && <small>{fieldErrors.confirmPassword}</small>}
-            </label>
-
-            <button type="submit" className="btn-primary account-submit-btn" disabled={changingPassword}>
-              {changingPassword ? <Loader className="spin" size={18} aria-hidden /> : <KeyRound size={18} aria-hidden />}
-              Şifreyi güncelle
-            </button>
-          </form>
-        </section>
-
-        <section className="account-card glass-panel">
-          <div className="account-card-header">
-            <div className="account-card-icon">
-              <ShieldCheck size={21} aria-hidden />
-            </div>
-            <div>
-              <h3>Hesap sınırları ve güvenlik</h3>
-              <p>Bu alan proje davranışına bağlı gerçek kuralları gösterir.</p>
-            </div>
-          </div>
-
-          <div className="account-policy-list">
-            <div>
-              <span>Yükleme sınırı</span>
-              <strong>{limits?.max_upload_mb || 20} MB</strong>
-            </div>
-            <div>
-              <span>Desteklenen formatlar</span>
-              <strong>{(limits?.supported_formats || ['CSV', 'XLSX', 'TXT']).join(', ')}</strong>
-            </div>
-            <div>
-              <span>Ham dosya davranışı</span>
-              <strong>Temiz çıktı ayrı dosya olarak oluşturulur.</strong>
-            </div>
-            <div>
-              <span>Veri sahipliği</span>
-              <strong>Veri setleri yalnızca oturumdaki kullanıcıya görünür.</strong>
-            </div>
-          </div>
-        </section>
+        </main>
       </div>
     </div>
   );
