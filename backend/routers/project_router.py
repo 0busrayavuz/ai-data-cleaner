@@ -129,3 +129,23 @@ def project_timeline(
         })
     events.sort(key=lambda x: x.get("at") or "")
     return {"project_id": project_id, "project_name": p.name, "events": events}
+
+
+@router.delete("/projects/{project_id}")
+def delete_project(
+    project_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    p = project_owned(db, project_id, user)
+    if not p:
+        raise HTTPException(status_code=404, detail="Proje bulunamadı.")
+    
+    # Projeye ait tüm veri setlerinin proje bağını kopar (veya sil, şu an None yapalım)
+    dsets = db.query(Dataset).filter(Dataset.project_id == project_id).all()
+    for d in dsets:
+        d.project_id = None
+
+    db.delete(p)
+    db.commit()
+    return {"status": "success", "message": "Proje silindi."}

@@ -1,5 +1,5 @@
 """
-VeriTemiz AI - FastAPI Giriş Noktası
+PrepWise - FastAPI Giriş Noktası
 
 Bu dosya yalnızca şunları içerir:
   - FastAPI uygulaması oluşturma
@@ -45,7 +45,7 @@ from backend.routers.dataset_router import router as dataset_router
 limiter = Limiter(key_func=get_remote_address)
 
 # ── Uygulama oluşturma ────────────────────────────────────────────────────────
-app = FastAPI(title="VeriTemiz AI", version="1.0.0")
+app = FastAPI(title="PrepWise", version="1.0.0")
 app.state.limiter = limiter
 
 # 429 Too Many Requests için Türkçe hata handler'ı

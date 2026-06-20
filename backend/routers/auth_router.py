@@ -83,15 +83,15 @@ def send_reset_email(to_email: str, token: str) -> bool:
         msg = MIMEMultipart()
         msg["From"] = smtp_user
         msg["To"] = to_email
-        msg["Subject"] = "VeriTemiz AI - Şifre Sıfırlama Kodu"
+        msg["Subject"] = "PrepWise - Şifre Sıfırlama Kodu"
 
         body = (
             f"Merhaba,\n\n"
-            f"VeriTemiz AI hesabınız için şifre sıfırlama talebinde bulundunuz.\n"
+            f"PrepWise hesabınız için şifre sıfırlama talebinde bulundunuz.\n"
             f"Şifrenizi sıfırlamak için arayüzdeki ilgili alana girmeniz gereken kod (token):\n\n"
             f"{token}\n\n"
             f"Bu kod 1 saat süreyle geçerlidir. Eğer bu talebi siz yapmadıysanız lütfen bu e-postayı "
-            f"dikkate almayınız.\n\nSaygılarımızla,\nVeriTemiz AI Ekibi\n"
+            f"dikkate almayınız.\n\nSaygılarımızla,\nPrepWise Ekibi\n"
         )
         msg.attach(MIMEText(body, "plain", "utf-8"))
 

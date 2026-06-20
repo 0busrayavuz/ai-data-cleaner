@@ -12,8 +12,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
 
-PDF_FONT_REGULAR = "VeriTemizSans"
-PDF_FONT_BOLD = "VeriTemizSans-Bold"
+PDF_FONT_REGULAR = "PrepWiseSans"
+PDF_FONT_BOLD = "PrepWiseSans-Bold"
 
 
 def _register_pdf_fonts() -> tuple[str, str]:
@@ -97,7 +97,7 @@ def generate_quality_report(
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>VeriTemiz AI - Kalite ve Temizlik Raporu</title>
+    <title>PrepWise - Kalite ve Temizlik Raporu</title>
     <style>
         body {{
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -235,7 +235,7 @@ def generate_quality_report(
     <div class="container">
         <div class="header">
             <div>
-                <h1>VeriTemiz AI</h1>
+                <h1>PrepWise</h1>
                 <div style="color: #9ca3af; font-size: 0.9rem;">Akıllı Veri Temizleme Kalite Raporu</div>
             </div>
             <div class="date">Oluşturma Tarihi: {datetime.now().strftime("%d.%m.%Y %H:%M")}</div>
@@ -417,7 +417,7 @@ def generate_quality_report(
         elements = []
 
         # Header
-        elements.append(Paragraph("VeriTemiz AI - Veri Kalite Raporu", title_style))
+        elements.append(Paragraph("PrepWise - Veri Kalite Raporu", title_style))
         elements.append(Paragraph(f"Oluşturulma Tarihi: {datetime.now().strftime('%d.%m.%Y %H:%M')}", subtitle_style))
         elements.append(Spacer(1, 10))
 

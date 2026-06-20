@@ -235,6 +235,49 @@ def apply(
     return {"status": "processing", "message": "Temizleme işlemi arka planda başlatıldı."}
 
 
+class UpdateProjectRequest(BaseModel):
+    project_id: int | None
+
+@router.put("/datasets/{dataset_id}/project")
+def update_dataset_project(
+    dataset_id: int,
+    request: UpdateProjectRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    if not dataset or dataset.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Veri seti bulunamadı.")
+    
+    if request.project_id is not None:
+        if not project_owned(db, request.project_id, user):
+            raise HTTPException(status_code=404, detail="Proje bulunamadı.")
+            
+    dataset.project_id = request.project_id
+    db.commit()
+    return {"status": "success", "message": "Proje güncellendi."}
+
+@router.delete("/datasets/{dataset_id}")
+def delete_dataset(
+    dataset_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    if not dataset or dataset.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Veri seti bulunamadı.")
+    
+    # Optional: Delete files from disk as well to free up space
+    try:
+        if dataset.file_path and os.path.exists(dataset.file_path):
+            os.remove(dataset.file_path)
+    except Exception:
+        pass
+
+    db.delete(dataset)
+    db.commit()
+    return {"status": "success", "message": "Veri seti silindi."}
+
 @router.get("/datasets/{dataset_id}/status")
 def get_dataset_status(
     dataset_id: int,
