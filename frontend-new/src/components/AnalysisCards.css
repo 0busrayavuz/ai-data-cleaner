@@ -1,4 +1,4 @@
-.analysis-section {
+﻿.analysis-section {
   padding: clamp(36px, 7vw, 82px) 0;
 }
 
@@ -47,7 +47,7 @@
   padding: 23px;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(16, 41, 35, 0.09);
+  border: 1px solid rgba(11, 26, 56, 0.09);
   border-radius: 17px;
   background: rgba(255, 255, 255, 0.8);
   box-shadow: var(--shadow-sm);
@@ -67,7 +67,7 @@
   box-shadow: var(--shadow-lg);
 }
 
-.method-card--emerald { --method-color: #0c8f72; --method-soft: rgba(12, 143, 114, 0.09); }
+.method-card--emerald { --method-color: #0070a8; --method-soft: rgba(0, 110, 168, 0.09); }
 .method-card--cyan { --method-color: #177f9c; --method-soft: rgba(23, 127, 156, 0.09); }
 .method-card--amber { --method-color: #c98a22; --method-soft: rgba(201, 138, 34, 0.1); }
 .method-card--violet { --method-color: #6f67a8; --method-soft: rgba(111, 103, 168, 0.09); }

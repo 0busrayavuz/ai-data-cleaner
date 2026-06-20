@@ -5,27 +5,32 @@
 @tailwind utilities;
 
 :root {
-  --bg-color: #f3f7f6;
+  --bg-color: #f7f9fc;
   --bg-secondary: #ffffff;
-  --surface-soft: #eaf1ef;
-  --surface-dark: #102923;
-  --text-primary: #10231f;
-  --text-secondary: #526660;
-  --text-muted: #758781;
-  --accent-primary: #0c8f72;
-  --accent-secondary: #176b87;
-  --accent-warm: #e2a843;
-  --accent-glow: rgba(12, 143, 114, 0.2);
-  --accent-ring: rgba(12, 143, 114, 0.34);
-  --glass-bg: rgba(255, 255, 255, 0.84);
-  --glass-border: rgba(16, 41, 35, 0.09);
+  --surface-soft: #eef2f6;
+  --surface-dark: #0b1a38;
+  --text-primary: #0b1a38;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --accent-primary: #0b2559;
+  --accent-secondary: #00aeef;
+  --accent-cyan: #00c8ff;
+  --accent-warm: #d4af37;
+  --accent-glow: rgba(11, 37, 89, 0.22);
+  --accent-cyan-glow: rgba(0, 200, 255, 0.18);
+  --accent-ring: rgba(0, 174, 239, 0.34);
+  --gradient-brand: linear-gradient(135deg, #0b2559 0%, #00aeef 60%, #00c8ff 100%);
+  --gradient-brand-h: linear-gradient(90deg, #0b2559 0%, #00aeef 55%, #00c8ff 100%);
+  --gradient-dark: linear-gradient(135deg, #0b1a38 0%, #0b2559 100%);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(11, 26, 56, 0.08);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
   --radius-xl: 26px;
-  --shadow-sm: 0 2px 10px rgba(16, 35, 31, 0.05);
-  --shadow-md: 0 14px 38px rgba(16, 35, 31, 0.08);
-  --shadow-lg: 0 26px 70px rgba(16, 35, 31, 0.13);
+  --shadow-sm: 0 2px 10px rgba(11, 26, 56, 0.05);
+  --shadow-md: 0 14px 38px rgba(11, 26, 56, 0.08);
+  --shadow-lg: 0 26px 70px rgba(11, 26, 56, 0.13);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   color-scheme: light;
@@ -41,16 +46,17 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   background-image:
-    linear-gradient(rgba(16, 41, 35, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 41, 35, 0.025) 1px, transparent 1px),
-    radial-gradient(ellipse 900px 520px at 8% -8%, rgba(12, 143, 114, 0.12), transparent 58%),
-    radial-gradient(ellipse 760px 480px at 95% 4%, rgba(23, 107, 135, 0.09), transparent 55%);
+    linear-gradient(rgba(0, 174, 239, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 174, 239, 0.03) 1px, transparent 1px),
+    radial-gradient(ellipse 900px 520px at 8% -8%, rgba(0, 200, 255, 0.1), transparent 58%),
+    radial-gradient(ellipse 760px 480px at 95% 4%, rgba(11, 37, 89, 0.08), transparent 55%),
+    radial-gradient(ellipse 600px 400px at 50% 100%, rgba(0, 174, 239, 0.05), transparent 60%);
   background-size: 32px 32px, 32px 32px, auto, auto;
   background-attachment: fixed;
 }
 
 ::selection {
-  background: rgba(12, 143, 114, 0.22);
+  background: rgba(0, 174, 239, 0.2);
   color: var(--text-primary);
 }
 
@@ -86,12 +92,12 @@ button:focus-visible {
 }
 
 .glass-panel:hover {
-  border-color: rgba(12, 143, 114, 0.2);
-  box-shadow: var(--shadow-lg);
+  border-color: rgba(0, 174, 239, 0.28);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0, 200, 255, 0.08);
 }
 
 .glow-text {
-  background: linear-gradient(135deg, #0c8f72 0%, #176b87 100%);
+  background: var(--gradient-brand);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -108,7 +114,7 @@ button:focus-visible {
 
 /* Buttons */
 .btn-primary {
-  background: linear-gradient(135deg, #0c8f72 0%, #08765f 100%);
+  background: linear-gradient(135deg, #0b2559 0%, #061536 100%);
   color: white;
   border: none;
   padding: 14px 28px;
@@ -146,7 +152,8 @@ button:focus-visible {
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 16px 34px rgba(12, 143, 114, 0.3);
+  box-shadow: 0 16px 34px rgba(0, 174, 239, 0.35), 0 0 0 1px rgba(0, 200, 255, 0.15);
+  filter: brightness(1.06);
 }
 
 .btn-primary:hover:not(:disabled)::after {

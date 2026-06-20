@@ -1,4 +1,4 @@
-.chatbot-wrapper {
+﻿.chatbot-wrapper {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
@@ -32,7 +32,7 @@
 .chatbot-toggle-btn:hover {
   transform: translateY(-4px);
   background: var(--accent-primary);
-  box-shadow: 0 16px 34px rgba(12, 143, 114, 0.3);
+  box-shadow: 0 16px 34px rgba(0, 110, 168, 0.3);
 }
 
 .bounce-in {
@@ -55,7 +55,7 @@
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(16, 41, 35, 0.1);
+  border: 1px solid rgba(11, 26, 56, 0.1);
   box-shadow: 0 24px 60px rgba(16, 41, 35, 0.2);
   animation: slideUp 0.3s ease-out;
   transform-origin: bottom right;
@@ -74,8 +74,8 @@
   padding: 0.65rem 1rem;
   font-size: 0.8rem;
   color: var(--text-secondary);
-  background: rgba(12, 143, 114, 0.07);
-  border-bottom: 1px solid rgba(16, 41, 35, 0.08);
+  background: rgba(0, 110, 168, 0.07);
+  border-bottom: 1px solid rgba(11, 26, 56, 0.08);
 }
 
 .chatbot-auth-btn {
@@ -84,7 +84,7 @@
   font-weight: 600;
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid rgba(12, 143, 114, 0.2);
+  border: 1px solid rgba(0, 110, 168, 0.2);
   background: var(--accent-primary);
   color: #fff;
   cursor: pointer;
@@ -127,7 +127,7 @@
 }
 
 .chatbot-icon {
-  color: #7de0c5;
+  color: #00aeef;
 }
 
 .chatbot-close {
@@ -164,7 +164,7 @@
   background: transparent;
 }
 .chatbot-messages::-webkit-scrollbar-thumb {
-  background: rgba(16, 41, 35, 0.12);
+  background: rgba(11, 26, 56, 0.12);
   border-radius: 10px;
 }
 
@@ -193,7 +193,7 @@
 
 .chat-message.bot .message-bubble {
   background: white;
-  border: 1px solid rgba(16, 41, 35, 0.08);
+  border: 1px solid rgba(11, 26, 56, 0.08);
   color: var(--text-primary);
   border-bottom-left-radius: 4px;
 }
@@ -208,14 +208,14 @@
   display: flex;
   padding: 0.75rem;
   background: white;
-  border-top: 1px solid rgba(16, 41, 35, 0.08);
+  border-top: 1px solid rgba(11, 26, 56, 0.08);
   gap: 0.5rem;
 }
 
 .chatbot-input {
   flex: 1;
   background: #f3f7f6;
-  border: 1px solid rgba(16, 41, 35, 0.1);
+  border: 1px solid rgba(11, 26, 56, 0.1);
   padding: 0.75rem 1rem;
   border-radius: 20px;
   color: var(--text-primary);
@@ -254,7 +254,7 @@
 }
 
 .chatbot-send:disabled {
-  background: rgba(16, 41, 35, 0.08);
+  background: rgba(11, 26, 56, 0.08);
   color: rgba(16, 41, 35, 0.3);
   cursor: not-allowed;
 }

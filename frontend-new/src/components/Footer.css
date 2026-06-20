@@ -1,4 +1,4 @@
-.footer {
+﻿.footer {
   margin-top: 40px;
   padding: 28px 0;
   border-top: 1px solid rgba(125, 224, 197, 0.11);
@@ -24,7 +24,7 @@
   display: grid;
   place-items: center;
   border-radius: 9px;
-  color: #7de0c5;
+  color: #00aeef;
   background: rgba(125, 224, 197, 0.1);
 }
 

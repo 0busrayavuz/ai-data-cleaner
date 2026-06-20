@@ -1,4 +1,4 @@
-/* ─────────────────────────────────────────────────────────────────────────────
+﻿/* ─────────────────────────────────────────────────────────────────────────────
    AnalysisResults — Stüdyo Premium Yenileme
    Glassmorphism dark panel, accordion kartlar, sticky action bar
 ───────────────────────────────────────────────────────────────────────────── */
@@ -22,10 +22,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid rgba(12, 143, 114, 0.14);
+  border: 1px solid rgba(0, 110, 168, 0.14);
   border-radius: 22px;
   background:
-    radial-gradient(circle at 50% 0, rgba(12, 143, 114, 0.1), transparent 38%),
+    radial-gradient(circle at 50% 0, rgba(0, 110, 168, 0.1), transparent 38%),
     rgba(255, 255, 255, 0.88);
   box-shadow: var(--shadow-lg);
   text-align: center;
@@ -39,8 +39,8 @@
   margin-bottom: 18px;
   border-radius: 18px;
   color: var(--accent-primary);
-  background: rgba(12, 143, 114, 0.1);
-  box-shadow: 0 0 24px rgba(12, 143, 114, 0.2);
+  background: rgba(0, 110, 168, 0.1);
+  box-shadow: 0 0 24px rgba(0, 110, 168, 0.2);
 }
 
 .summary-overline,
@@ -148,9 +148,9 @@
 }
 
 .studio-stat-chip.chip-missing {
-  color: #0a705b;
-  background: rgba(12, 143, 114, 0.1);
-  border-color: rgba(12, 143, 114, 0.18);
+  color: #00588a;
+  background: rgba(0, 110, 168, 0.1);
+  border-color: rgba(0, 110, 168, 0.18);
 }
 .studio-stat-chip.chip-outlier {
   color: #8a5200;
@@ -179,7 +179,7 @@
   width: fit-content;
   margin-bottom: 10px;
   padding: 10px 14px;
-  border: 1px solid rgba(16, 41, 35, 0.08);
+  border: 1px solid rgba(11, 26, 56, 0.08);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.78);
 }
@@ -206,7 +206,7 @@
   height: 20px;
   display: grid;
   place-items: center;
-  border: 1.5px solid rgba(16, 41, 35, 0.18);
+  border: 1.5px solid rgba(11, 26, 56, 0.18);
   border-radius: 5px;
   background: white;
   transition: border-color 0.18s ease, background 0.18s ease;
@@ -241,7 +241,7 @@
   font-size: 0.8rem;
   border-radius: 12px;
   background: rgba(16, 41, 35, 0.03);
-  border: 1px solid rgba(16, 41, 35, 0.07);
+  border: 1px solid rgba(11, 26, 56, 0.07);
 }
 
 .studio-decision-note strong {
@@ -263,7 +263,7 @@
   padding: 18px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(16, 41, 35, 0.08);
+  border: 1px solid rgba(11, 26, 56, 0.08);
 }
 
 .template-quick-icon {
@@ -297,7 +297,7 @@
   min-width: 220px;
   height: 40px;
   padding: 0 11px;
-  border: 1px solid rgba(16, 41, 35, 0.12);
+  border: 1px solid rgba(11, 26, 56, 0.12);
   border-radius: 9px;
   background: white;
   color: var(--text-primary);
@@ -310,7 +310,7 @@
 .template-name-input:focus {
   outline: none;
   border-color: rgba(12, 143, 114, 0.35);
-  box-shadow: 0 0 0 3px rgba(12, 143, 114, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 110, 168, 0.1);
 }
 
 /* ── Recommendations list ────────────────────────────────────────────────── */
@@ -327,10 +327,10 @@
   --category-color: var(--accent-primary);
   --category-bg: rgba(12, 143, 114, 0.06);
   overflow: hidden;
-  border: 1px solid rgba(16, 41, 35, 0.08);
+  border: 1px solid rgba(11, 26, 56, 0.08);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 2px 8px rgba(16, 35, 31, 0.05);
+  box-shadow: 0 2px 8px rgba(11, 26, 56, 0.05);
   transition:
     opacity 0.25s ease,
     box-shadow 0.25s ease,
@@ -339,8 +339,8 @@
 }
 
 .rec-missing {
-  --category-color: #0c8f72;
-  --category-bg: rgba(12, 143, 114, 0.05);
+  --category-color: #0070a8;
+  --category-bg: rgba(0, 110, 168, 0.05);
 }
 .rec-outlier {
   --category-color: #c98a22;
@@ -460,7 +460,7 @@
   align-items: center;
   gap: 5px;
   padding: 6px 10px;
-  border: 1px solid rgba(16, 41, 35, 0.1);
+  border: 1px solid rgba(11, 26, 56, 0.1);
   border-radius: 8px;
   background: white;
   color: var(--text-secondary);
@@ -482,7 +482,7 @@
 
 .rec-details {
   padding: 20px 22px 22px 26px;
-  border-top: 1px solid rgba(16, 41, 35, 0.07);
+  border-top: 1px solid rgba(11, 26, 56, 0.07);
   background: rgba(250, 252, 251, 0.7);
   animation: detailEnter 0.28s var(--ease-out);
 }
@@ -516,7 +516,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 14px;
-  border: 1.5px solid rgba(16, 41, 35, 0.08);
+  border: 1.5px solid rgba(11, 26, 56, 0.08);
   border-radius: 12px;
   background: white;
   cursor: pointer;
@@ -545,7 +545,7 @@
   height: 18px;
   margin-top: 1px;
   border-radius: 50%;
-  border: 2px solid rgba(16, 41, 35, 0.18);
+  border: 2px solid rgba(11, 26, 56, 0.18);
   background: white;
   display: grid;
   place-items: center;
@@ -635,7 +635,7 @@
   color: var(--accent-primary);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(16, 41, 35, 0.08);
+  border: 1px solid rgba(11, 26, 56, 0.08);
 }
 
 .save-template-fields { min-width: 0; flex: 1; }
@@ -664,7 +664,7 @@
   padding: 0 14px;
   border: 1px solid rgba(12, 143, 114, 0.22);
   border-radius: 9px;
-  background: rgba(12, 143, 114, 0.07);
+  background: rgba(0, 110, 168, 0.07);
   color: var(--accent-primary);
   font: inherit;
   font-size: 0.78rem;
@@ -783,7 +783,7 @@
   padding: 10px 22px;
   border: 0;
   border-radius: 13px;
-  background: linear-gradient(135deg, #0c8f72, #08765f);
+  background: linear-gradient(135deg, #0070a8, #08765f);
   color: white;
   font: inherit;
   font-size: 0.9rem;
@@ -823,7 +823,7 @@
 
 .studio-fab-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #3ecfab, #0c8f72, #3ecfab);
+  background: linear-gradient(90deg, #3ecfab, #0070a8, #3ecfab);
   background-size: 200% 100%;
   animation: progressSlide 1.4s linear infinite;
   border-radius: 999px;

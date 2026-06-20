@@ -1,4 +1,4 @@
-.how-it-works-section {
+﻿.how-it-works-section {
   padding: clamp(30px, 6vw, 72px) 0;
 }
 
@@ -45,7 +45,7 @@
 .hiw-steps {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  border: 1px solid rgba(16, 41, 35, 0.09);
+  border: 1px solid rgba(11, 26, 56, 0.09);
   border-radius: 20px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.7);
@@ -56,7 +56,7 @@
   min-height: 230px;
   padding: 25px;
   position: relative;
-  border-right: 1px solid rgba(16, 41, 35, 0.08);
+  border-right: 1px solid rgba(11, 26, 56, 0.08);
   transition: background 0.25s ease;
 }
 
@@ -65,7 +65,7 @@
 }
 
 .hiw-step:hover {
-  background: rgba(12, 143, 114, 0.045);
+  background: rgba(0, 110, 168, 0.045);
 }
 
 .hiw-step-head {
@@ -76,7 +76,7 @@
 }
 
 .step-number {
-  color: rgba(16, 41, 35, 0.28);
+  color: rgba(11, 26, 56, 0.28);
   font-family: 'Manrope', sans-serif;
   font-size: 0.78rem;
   font-weight: 800;
@@ -90,7 +90,7 @@
   place-items: center;
   border-radius: 11px;
   color: var(--accent-primary);
-  background: rgba(12, 143, 114, 0.09);
+  background: rgba(0, 110, 168, 0.09);
 }
 
 .hiw-step h4 {
@@ -121,7 +121,7 @@
   }
 
   .hiw-step:nth-child(-n + 2) {
-    border-bottom: 1px solid rgba(16, 41, 35, 0.08);
+    border-bottom: 1px solid rgba(11, 26, 56, 0.08);
   }
 }
 
@@ -133,7 +133,7 @@
   .hiw-step {
     min-height: auto;
     border-right: 0;
-    border-bottom: 1px solid rgba(16, 41, 35, 0.08);
+    border-bottom: 1px solid rgba(11, 26, 56, 0.08);
   }
 
   .hiw-step:last-child {

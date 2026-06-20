@@ -1,4 +1,4 @@
-.faq-section {
+﻿.faq-section {
   padding: clamp(50px, 8vw, 110px) 0;
   position: relative;
 }
@@ -51,7 +51,7 @@
   padding: 24px;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(12, 143, 114, 0.15);
+  border: 1px solid rgba(0, 110, 168, 0.15);
   box-shadow: 0 12px 34px rgba(16, 41, 35, 0.04);
 }
 
@@ -97,7 +97,7 @@
   min-width: 0;
   padding: 12px 16px;
   border-radius: 12px;
-  border: 1px solid rgba(16, 41, 35, 0.12);
+  border: 1px solid rgba(11, 26, 56, 0.12);
   background: white;
   font-family: inherit;
   font-size: 0.88rem;
@@ -108,14 +108,14 @@
 .faq-ask-inputs input:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(12, 143, 114, 0.15);
+  box-shadow: 0 0 0 3px rgba(0, 110, 168, 0.15);
 }
 
 .faq-ask-form textarea {
   width: 100%;
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid rgba(16, 41, 35, 0.12);
+  border: 1px solid rgba(11, 26, 56, 0.12);
   background: white;
   font-family: inherit;
   font-size: 0.9rem;
@@ -128,7 +128,7 @@
 .faq-ask-form textarea:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(12, 143, 114, 0.15);
+  box-shadow: 0 0 0 3px rgba(0, 110, 168, 0.15);
 }
 
 .faq-ask-form .btn-primary {
@@ -147,9 +147,9 @@
   align-items: center;
   gap: 14px;
   padding: 18px;
-  background: rgba(12, 143, 114, 0.08);
+  background: rgba(0, 110, 168, 0.08);
   border-radius: 14px;
-  border: 1px solid rgba(12, 143, 114, 0.15);
+  border: 1px solid rgba(0, 110, 168, 0.15);
   animation: faqSuccessEnter 0.4s var(--ease-out);
 }
 
@@ -188,20 +188,20 @@
 .faq-accordion-item {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(16, 41, 35, 0.08);
+  border: 1px solid rgba(11, 26, 56, 0.08);
   overflow: hidden; /* Animasyon için önemli */
   transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .faq-accordion-item:hover {
-  border-color: rgba(12, 143, 114, 0.25);
+  border-color: rgba(0, 110, 168, 0.25);
   background: rgba(255, 255, 255, 0.9);
 }
 
 .faq-accordion-item.open {
   background: white;
   border-color: var(--accent-primary);
-  box-shadow: 0 12px 30px rgba(16, 35, 31, 0.05), inset 0 0 0 1px rgba(12, 143, 114, 0.1);
+  box-shadow: 0 12px 30px rgba(11, 26, 56, 0.05), inset 0 0 0 1px rgba(0, 110, 168, 0.1);
 }
 
 .faq-accordion-header {
@@ -242,7 +242,7 @@
 }
 
 .faq-accordion-item:hover .faq-toggle-icon {
-  background: rgba(12, 143, 114, 0.1);
+  background: rgba(0, 110, 168, 0.1);
   color: var(--accent-primary);
 }
 

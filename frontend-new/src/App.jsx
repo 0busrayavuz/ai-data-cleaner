@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import {
-  Database,
   Home,
   LayoutDashboard,
   LogIn,
@@ -212,15 +211,9 @@ function App() {
             type="button"
             className="navbar-brand"
             onClick={() => setCurrentView('home')}
-            aria-label="VeriTemiz AI ana sayfa"
+            aria-label="PrepWise ana sayfa"
           >
-            <span className="brand-mark" aria-hidden>
-              <Database size={21} strokeWidth={2.2} />
-            </span>
-            <div className="navbar-title-wrap">
-              <h1 className="navbar-title">VeriTemiz <span>AI</span></h1>
-              <p className="navbar-tagline">Veri kalitesi çalışma alanı</p>
-            </div>
+            <img src="/logo.png" alt="PrepWise" className="navbar-logo-img" />
           </button>
           <div className="nav-links">
             <button

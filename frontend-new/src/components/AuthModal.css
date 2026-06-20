@@ -1,4 +1,4 @@
-.auth-overlay {
+﻿.auth-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -89,7 +89,7 @@
 
 .glow-icon {
   color: var(--accent-primary);
-  filter: drop-shadow(0 0 10px rgba(12, 143, 114, 0.25));
+  filter: drop-shadow(0 0 10px rgba(0, 110, 168, 0.25));
 }
 
 .auth-form {
