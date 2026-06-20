@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Activity, Database, Clock, Download, FileSearch, FileSpreadsheet, History, Plus, RefreshCw } from 'lucide-react';
-import { fetchMyDatasets, downloadCleanedDataset, downloadAuditExport, fetchProjectTimeline, downloadQualityReport } from '../services/api';
+import { Activity, Database, Clock, Download, FileSearch, FileSpreadsheet, History, Plus, RefreshCw, Trash2, FolderPlus } from 'lucide-react';
+import { fetchMyDatasets, downloadCleanedDataset, downloadAuditExport, fetchProjectTimeline, downloadQualityReport, deleteDataset, deleteProject, createProject } from '../services/api';
 import './UserDashboard.css';
 
-const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
+const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset, onProjectsChanged }) => {
   const [payload, setPayload] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -29,6 +29,42 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleDeleteDataset = async (id) => {
+    if (!window.confirm('Bu veri setini silmek istediğinize emin misiniz?')) return;
+    try {
+      await deleteDataset(id);
+      load();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!filterProjectId) return;
+    if (!window.confirm('Bu projeyi silmek istediğinize emin misiniz? İçindeki veri setleri projesiz kalacaktır.')) return;
+    try {
+      await deleteProject(filterProjectId);
+      setFilterProjectId('');
+      load();
+      onProjectsChanged?.();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    const name = window.prompt('Yeni proje adı:');
+    if (!name || !name.trim()) return;
+    try {
+      const p = await createProject(name);
+      setFilterProjectId(p.id);
+      load();
+      onProjectsChanged?.();
+    } catch (e) {
+      alert(e.message);
+    }
+  };
 
   useEffect(() => {
     if (!filterProjectId) {
@@ -105,7 +141,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
         <p className="status-msg error" style={{ marginBottom: '1rem' }}>{error}</p>
       )}
 
-      <div className="dashboard-filters glass-panel">
+      <div className="dashboard-filters glass-panel" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <label htmlFor="dash-project-filter" className="filter-label">
           Projeye göre filtrele
         </label>
@@ -120,6 +156,14 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
+        <button type="button" className="action-btn icon-only" onClick={handleCreateProject} title="Yeni proje oluştur">
+          <FolderPlus size={18} />
+        </button>
+        {filterProjectId && (
+          <button type="button" className="action-btn icon-only danger" onClick={handleDeleteProject} title="Projeyi sil">
+            <Trash2 size={18} />
+          </button>
+        )}
       </div>
 
       {filterProjectId && (
@@ -249,6 +293,15 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset }) => {
                             title="İşlem ve kalite günlüğünü CSV olarak indir"
                           >
                             <FileSpreadsheet size={16} /> Denetim
+                          </button>
+                          <button
+                            type="button"
+                            className="action-btn icon-only danger"
+                            onClick={() => handleDeleteDataset(item.id)}
+                            title="Veri setini sil"
+                            style={{ marginLeft: 'auto' }}
+                          >
+                            <Trash2 size={16} />
                           </button>
                         </td>
                       </tr>

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
   ArrowRight,
@@ -35,9 +35,9 @@ import './DatasetWorkspace.css';
 
 const VIEW_META = {
   profile: {
-    eyebrow: 'Veriyi tanı',
-    title: 'Veri Profili',
-    description: 'Sütun yapısını, eksik oranlarını, dağılımları ve ilişkileri inceleyin.',
+    eyebrow: 'Ham veri ön izlemesi',
+    title: 'Orijinal Veri Profili',
+    description: 'Yüklediğiniz ham (işlem öncesi) verinin sütun yapısını, orijinal eksik oranlarını ve dağılımlarını inceleyin.',
     icon: FileSearch,
   },
   studio: {
@@ -416,10 +416,10 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
   return (
     <div className="workspace-profile">
       <section className="workspace-metrics">
-        <MetricCard icon={Rows3} label="Satır" value={profile.row_count} tone="emerald" animate />
-        <MetricCard icon={Columns3} label="Sütun" value={profile.col_count} tone="blue" animate />
-        <MetricCard icon={TriangleAlert} label="Eksik hücre" value={profile.missing_cells} tone="amber" animate />
-        <MetricCard icon={TableProperties} label="Tekrar eden satır" value={profile.duplicate_rows} tone="purple" animate />
+        <MetricCard icon={Rows3} label="Başlangıç satır" value={profile.row_count} tone="emerald" animate />
+        <MetricCard icon={Columns3} label="Başlangıç sütun" value={profile.col_count} tone="blue" animate />
+        <MetricCard icon={TriangleAlert} label="Orijinal eksik hücre" value={profile.missing_cells} tone="amber" animate />
+        <MetricCard icon={TableProperties} label="İlk tekrar eden satır" value={profile.duplicate_rows} tone="purple" animate />
       </section>
 
       <section className="workspace-profile-grid">

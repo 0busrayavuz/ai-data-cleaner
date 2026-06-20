@@ -76,7 +76,7 @@ const Chatbot = ({ onNeedAuth, isLoggedIn = false }) => {
           <div className="chatbot-header">
             <div className="chatbot-title">
               <Bot size={20} className="chatbot-icon" />
-              <span>Veri asistanı</span>
+              <span>PrepWise AI</span>
             </div>
             <button type="button" className="chatbot-close" onClick={toggleChat} aria-label="Kapat">
               <X size={20} />
@@ -131,8 +131,9 @@ const Chatbot = ({ onNeedAuth, isLoggedIn = false }) => {
       )}
 
       {!isOpen && (
-        <button type="button" className="chatbot-toggle-btn bounce-in" onClick={toggleChat} aria-label="Yardımcı asistanı aç">
-          <MessageSquare size={26} strokeWidth={2.25} className="chatbot-fab-icon" />
+        <button type="button" className="chatbot-toggle-btn bounce-in" onClick={toggleChat} aria-label="PrepWise AI'ı aç">
+          <Bot size={22} strokeWidth={2.25} className="chatbot-fab-icon" />
+          <span className="chatbot-fab-text">PrepWise AI</span>
         </button>
       )}
     </div>

@@ -20,10 +20,6 @@ const Hero = ({ isLoggedIn, onStart, onOpenPanel }) => {
   return (
     <section className="hero-section" aria-labelledby="hero-heading">
       <div className="hero-copy">
-        <div className="hero-badge">
-          <Sparkles size={15} aria-hidden />
-          <span>AI Destekli Veri Ön İşleme Platformu</span>
-        </div>
 
         <h2 id="hero-heading" className="hero-title">
           Ham veriden

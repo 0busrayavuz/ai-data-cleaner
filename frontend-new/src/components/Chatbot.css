@@ -1,4 +1,4 @@
-﻿.chatbot-wrapper {
+.chatbot-wrapper {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
@@ -9,18 +9,26 @@
 }
 
 .chatbot-toggle-btn {
-  width: 56px;
   height: 56px;
-  border-radius: 16px;
-  background: var(--surface-dark);
+  padding: 0 24px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #0b1a38, #00aeef);
   color: #fff;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   cursor: pointer;
-  box-shadow: 0 12px 30px rgba(16, 41, 35, 0.25);
+  box-shadow: 0 12px 30px rgba(0, 174, 239, 0.25);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.chatbot-fab-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .chatbot-fab-icon {

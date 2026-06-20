@@ -182,6 +182,26 @@ export const fetchMyDatasets = async (projectId = null) => {
   }
 };
 
+export const updateDatasetProject = async (datasetId, projectId) => {
+  try {
+    const res = await api.put(`/datasets/${datasetId}/project`, {
+      project_id: projectId === '' ? null : Number(projectId)
+    });
+    return res.data;
+  } catch (e) {
+    throw new Error(parseDetail(e));
+  }
+};
+
+export const deleteDataset = async (datasetId) => {
+  try {
+    const res = await api.delete(`/datasets/${datasetId}`);
+    return res.data;
+  } catch (e) {
+    throw new Error(parseDetail(e));
+  }
+};
+
 export const fetchProjects = async () => {
   try {
     const res = await api.get('/projects');
@@ -194,6 +214,15 @@ export const fetchProjects = async () => {
 export const createProject = async (name, description = null) => {
   try {
     const res = await api.post('/projects', { name, description });
+    return res.data;
+  } catch (e) {
+    throw new Error(parseDetail(e));
+  }
+};
+
+export const deleteProject = async (projectId) => {
+  try {
+    const res = await api.delete(`/projects/${projectId}`);
     return res.data;
   } catch (e) {
     throw new Error(parseDetail(e));

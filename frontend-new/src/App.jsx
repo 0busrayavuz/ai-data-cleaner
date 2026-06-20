@@ -45,6 +45,7 @@ function App() {
   const [projects, setProjects] = useState([])
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [templates, setTemplates] = useState([])
+  const [progress, setProgress] = useState(0)
 
   const loadProjects = () => {
     fetchProjects()
@@ -103,7 +104,27 @@ function App() {
   const openDatasetWorkspace = (id, view = 'profile') => {
     setDatasetId(Number(id))
     setCurrentView(view)
+    setStatus(null)
   }
+
+  const scrollToUpload = () => {
+    setCurrentView('home')
+    setStatus(null)
+    setTimeout(() => {
+      const el = document.getElementById('upload-workspace')
+      if (el) {
+        const yOffset = -80; // Account for the sticky header height
+        const y = el.getBoundingClientRect().top + window.scrollY + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    }, 50)
+  }
+
+  const goToHome = () => {
+    setCurrentView('home');
+    setStatus(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleFileSelect = async (file) => {
     if (!getStoredToken()) {
@@ -166,25 +187,41 @@ function App() {
     setSelectedProjectId(p.id)
   }
 
-  const renderStatus = () => {
-    if (status === 'uploading') {
-      return (
-        <div className="status-msg">
-          <span className="status-spinner" aria-hidden />
-          <div>
-            <strong>Dosya güvenli alana yükleniyor</strong>
-            <span>Dosya yapısı ve biçimi kontrol ediliyor.</span>
-          </div>
-        </div>
-      )
+  useEffect(() => {
+    let interval
+    if (status === 'uploading' || status === 'analyzing') {
+      setProgress(0)
+      interval = setInterval(() => {
+        setProgress((p) => {
+          // Asimptotik olarak %95'e yaklaş
+          const remaining = 95 - p
+          const step = Math.max(0.5, remaining * 0.08)
+          return Math.min(95, p + step)
+        })
+      }, 400)
+    } else if (status === 'results') {
+      setProgress(100)
+    } else {
+      setProgress(0)
     }
-    if (status === 'analyzing') {
+    return () => clearInterval(interval)
+  }, [status])
+
+  const renderStatus = () => {
+    if (status === 'uploading' || status === 'analyzing') {
+      const isUploading = status === 'uploading'
       return (
-        <div className="status-msg">
-          <span className="status-spinner" aria-hidden />
-          <div>
-            <strong>Kalite analizi devam ediyor</strong>
-            <span>Eksik değer, aykırı gözlem ve format sorunları taranıyor.</span>
+        <div className="status-msg loading-with-progress">
+          <div className="status-header">
+            <span className="status-spinner" aria-hidden />
+            <div className="status-text">
+              <strong>{isUploading ? 'Dosya güvenli alana yükleniyor' : 'Kalite analizi devam ediyor'}</strong>
+              <span>{isUploading ? 'Dosya yapısı ve biçimi kontrol ediliyor.' : 'Eksik değer, aykırı gözlem ve format sorunları taranıyor.'}</span>
+            </div>
+            <div className="status-percent">{Math.round(progress)}%</div>
+          </div>
+          <div className="status-progress-track">
+            <div className="status-progress-fill" style={{ width: `${progress}%` }} />
           </div>
         </div>
       )
@@ -210,7 +247,7 @@ function App() {
           <button
             type="button"
             className="navbar-brand"
-            onClick={() => setCurrentView('home')}
+            onClick={goToHome}
             aria-label="PrepWise ana sayfa"
           >
             <img src="/logo.png" alt="PrepWise" className="navbar-logo-img" />
@@ -219,7 +256,7 @@ function App() {
             <button
               type="button"
               className={`nav-btn ${currentView === 'home' ? 'active' : ''}`}
-              onClick={() => setCurrentView('home')}
+              onClick={goToHome}
             >
               <Home size={16} aria-hidden />
               Ana sayfa
@@ -264,7 +301,40 @@ function App() {
         </nav>
       </header>
 
-      <main className="main-content container">
+      {currentView === 'home' && (
+        <div className="hero-marquee-container" aria-hidden="true">
+          <div className="hero-marquee">
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+          </div>
+          <div className="hero-marquee" aria-hidden="true">
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+            <span>PrepWise Veri Ön İşleme</span>
+            <span className="marquee-dot">•</span>
+          </div>
+        </div>
+      )}
+
+      <main className={`main-content container ${currentView === 'home' ? 'home-view' : ''}`}>
         {currentView === 'home' && (
           <>
             <Hero
@@ -274,7 +344,7 @@ function App() {
                   setIsAuthOpen(true)
                   return
                 }
-                document.getElementById('upload-workspace')?.scrollIntoView({ behavior: 'smooth' })
+                scrollToUpload()
               }}
               onOpenPanel={() => setCurrentView('panel')}
             />
@@ -311,8 +381,9 @@ function App() {
         {currentView === 'panel' && (
           <UserDashboard
             userEmail={userEmail}
-            onNewAnalysis={() => setCurrentView('home')}
+            onNewAnalysis={scrollToUpload}
             onOpenDataset={(id) => openDatasetWorkspace(id, 'profile')}
+            onProjectsChanged={loadProjects}
           />
         )}
         {currentView === 'account' && (

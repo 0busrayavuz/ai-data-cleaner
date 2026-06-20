@@ -48,6 +48,27 @@ const CATEGORY_ICONS = {
 /* ── FloatingActionBar ───────────────────────────────────────────────────── */
 
 function FloatingActionBar({ selectedCount, totalCount, onApply, loading, applied }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (loading) {
+      setProgress(0);
+      interval = setInterval(() => {
+        setProgress((p) => {
+          const remaining = 95 - p;
+          const step = Math.max(0.5, remaining * 0.1);
+          return Math.min(95, p + step);
+        });
+      }, 300);
+    } else if (applied) {
+      setProgress(100);
+    } else {
+      setProgress(0);
+    }
+    return () => clearInterval(interval);
+  }, [loading, applied]);
+
   const visible = !applied && selectedCount > 0;
 
   return (
@@ -64,11 +85,11 @@ function FloatingActionBar({ selectedCount, totalCount, onApply, loading, applie
         onClick={onApply}
         disabled={loading || selectedCount === 0}
       >
-        {loading ? 'Uygulanıyor…' : 'Seçilenleri Uygula →'}
+        {loading ? `Uygulanıyor... %${Math.round(progress)}` : 'Seçilenleri Uygula →'}
       </button>
       {loading && (
         <div className="studio-fab-progress">
-          <div className="studio-fab-progress-bar" />
+          <div className="studio-fab-progress-bar" style={{ width: `${progress}%` }} />
         </div>
       )}
     </div>

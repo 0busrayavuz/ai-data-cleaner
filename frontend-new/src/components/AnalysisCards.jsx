@@ -79,8 +79,8 @@ const AnalysisCards = () => {
       <div className="analysis-note">
         <FileCheck2 size={20} aria-hidden />
         <div>
-          <strong>Sonuç yalnızca temiz veri değil.</strong>
-          <span>Uygulanan yöntemler, kalite değişimi ve işlem geçmişi raporlanır.</span>
+          <strong>İşlem geçmişi ve denetim izi</strong>
+          <span>Yapılan tüm değişiklikler ve kalite skorları otomatik olarak raporlanır.</span>
         </div>
       </div>
     </section>

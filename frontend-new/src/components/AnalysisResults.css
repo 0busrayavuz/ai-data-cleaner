@@ -1,4 +1,4 @@
-﻿/* ─────────────────────────────────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────────────────
    AnalysisResults — Stüdyo Premium Yenileme
    Glassmorphism dark panel, accordion kartlar, sticky action bar
 ───────────────────────────────────────────────────────────────────────────── */
@@ -827,6 +827,7 @@
   background-size: 200% 100%;
   animation: progressSlide 1.4s linear infinite;
   border-radius: 999px;
+  transition: width 0.3s ease-out;
 }
 
 @keyframes progressSlide {
