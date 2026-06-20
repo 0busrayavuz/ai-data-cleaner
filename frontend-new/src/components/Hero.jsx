@@ -11,9 +11,9 @@ import {
 import './Hero.css';
 
 const QUALITY_ROWS = [
-  { label: 'Eksik değerler', value: 92, tone: 'emerald' },
-  { label: 'Format tutarlılığı', value: 78, tone: 'cyan' },
-  { label: 'Aykırı gözlemler', value: 71, tone: 'amber' },
+  { label: 'Eksik veri oranı', value: 92, tone: 'emerald' },
+  { label: 'Şema tutarlılığı', value: 78, tone: 'cyan' },
+  { label: 'Aykırı değer skoru', value: 71, tone: 'amber' },
 ];
 
 const Hero = ({ isLoggedIn, onStart, onOpenPanel }) => {
@@ -22,35 +22,36 @@ const Hero = ({ isLoggedIn, onStart, onOpenPanel }) => {
       <div className="hero-copy">
         <div className="hero-badge">
           <Sparkles size={15} aria-hidden />
-          <span>Akıllı veri kalitesi karar destek sistemi</span>
+          <span>AI Destekli Veri Ön İşleme Platformu</span>
         </div>
 
         <h2 id="hero-heading" className="hero-title">
           Ham veriden
-          <span> güvenilir analize.</span>
+          <span> güvenilir analiz.</span>
         </h2>
 
         <p className="hero-lead">
-          Veri setinizi analiz edin, kalite sorunlarını görün, uygun temizleme
-          yöntemini seçin ve tüm dönüşümleri izlenebilir raporlarla yönetin.
+          Veri setinizi yükleyin; eksik değer, format tutarsızlığı ve aykırı
+          gözlem sorunlarını otomatik tespit edin. Temizleme yöntemini seçin,
+          her adımı denetim izi ile kayıt altına alın, PDF rapor indirin.
         </p>
 
         <div className="hero-actions">
           <button type="button" className="btn-primary hero-primary" onClick={onStart}>
-            {isLoggedIn ? 'Yeni analiz başlat' : 'Kullanmaya başla'}
+            {isLoggedIn ? 'Yeni analiz başlat' : 'Hemen başla'}
             <ArrowRight size={18} aria-hidden />
           </button>
           {isLoggedIn && (
             <button type="button" className="hero-secondary" onClick={onOpenPanel}>
-              Paneli aç
+              Çalışma paneli
             </button>
           )}
         </div>
 
         <div className="hero-proof" aria-label="Desteklenen özellikler">
-          <span><CheckCircle2 size={16} /> CSV, XLSX ve TXT</span>
-          <span><CheckCircle2 size={16} /> Kullanıcı onaylı işlemler</span>
-          <span><CheckCircle2 size={16} /> PDF ve HTML rapor</span>
+          <span><CheckCircle2 size={16} /> CSV, XLSX ve TXT desteği</span>
+          <span><CheckCircle2 size={16} /> Denetim izi &amp; sürüm kaydı</span>
+          <span><CheckCircle2 size={16} /> PDF / HTML kalite raporu</span>
         </div>
       </div>
 
@@ -60,17 +61,17 @@ const Hero = ({ isLoggedIn, onStart, onOpenPanel }) => {
             <div className="cockpit-file">
               <span className="cockpit-file-icon"><FileSpreadsheet size={18} /></span>
               <div>
-                <strong>satis_verisi.csv</strong>
-                <small>12.480 satır · 18 sütun</small>
+                <strong>musteri_segmentasyon.csv</strong>
+                <small>48.320 satır · 24 sütun · 3,2 MB</small>
               </div>
             </div>
-            <span className="cockpit-live"><i /> ÖRNEK VERİ GÖRÜNÜMÜ</span>
+            <span className="cockpit-live"><i /> CANLI ÖN İZLEME</span>
           </div>
 
           <div className="cockpit-grid">
             <div className="quality-score-card">
               <div className="quality-score-head">
-                <span>Veri kalitesi skoru</span>
+                <span>Kalite puanı</span>
                 <Gauge size={18} aria-hidden />
               </div>
               <div className="quality-score-body">
@@ -79,8 +80,8 @@ const Hero = ({ isLoggedIn, onStart, onOpenPanel }) => {
                   <small>/100</small>
                 </div>
                 <div>
-                  <span className="score-trend">+19 puan potansiyel</span>
-                  <p>Önerilen 7 işlem incelenmeye hazır.</p>
+                  <span className="score-trend">↑ +16 puan potansiyel</span>
+                  <p>9 öneri otomatik oluşturuldu.</p>
                 </div>
               </div>
             </div>
@@ -102,13 +103,13 @@ const Hero = ({ isLoggedIn, onStart, onOpenPanel }) => {
 
             <div className="pipeline-card">
               <div className="pipeline-head">
-                <span className="cockpit-label">Öneri motoru</span>
+                <span className="cockpit-label">Temizleme pipeline'ı</span>
                 <BarChart3 size={17} aria-hidden />
               </div>
               <div className="pipeline-list">
-                <div><i className="pipeline-dot emerald" /><span>MICE ile eksik değer tahmini</span><b>3</b></div>
-                <div><i className="pipeline-dot cyan" /><span>Format standardizasyonu</span><b>2</b></div>
-                <div><i className="pipeline-dot amber" /><span>Aykırı değer incelemesi</span><b>2</b></div>
+                <div><i className="pipeline-dot emerald" /><span>MICE ile eksik değer imputasyonu</span><b>3</b></div>
+                <div><i className="pipeline-dot cyan" /><span>Tarih / tip standardizasyonu</span><b>5</b></div>
+                <div><i className="pipeline-dot amber" /><span>IQR tabanlı aykırı değer tespiti</span><b>2</b></div>
               </div>
             </div>
           </div>
@@ -116,11 +117,11 @@ const Hero = ({ isLoggedIn, onStart, onOpenPanel }) => {
 
         <div className="floating-security">
           <ShieldCheck size={19} aria-hidden />
-          <div><strong>İzlenebilir süreç</strong><span>Her değişiklik kayıt altında</span></div>
+          <div><strong>Tam denetim izi</strong><span>Her operasyon zaman damgalı</span></div>
         </div>
         <div className="floating-dataset">
           <Database size={18} aria-hidden />
-          <span>CSV çıktısı + kalite raporu</span>
+          <span>Temiz CSV + kalite raporu</span>
         </div>
       </div>
     </section>

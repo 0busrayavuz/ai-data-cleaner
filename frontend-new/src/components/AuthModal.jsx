@@ -196,7 +196,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         <div className="auth-content">
           {view === 'login' && (
             <div className="auth-view">
-              <h2 className="glow-text">Hoş geldiniz</h2>
+              <h2 className="glow-text">PrepWise'a Giriş Yap</h2>
               <p className="auth-subtitle">Sisteme giriş yaparak verilerinizi yönetin.</p>
 
               {errorMsg && (
@@ -306,7 +306,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
               </div>
               <h2 className="glow-text">Hesap oluştur</h2>
               <p className="auth-subtitle">
-                VeriTemiz AI ile dosyalarınızı güvenle yükleyin. Kayıt için yalnızca e-posta ve şifre yeterlidir.
+                PrepWise ile dosyalarınızı güvenle yükleyin. Kayıt için yalnızca e-posta ve şifre yeterlidir.
               </p>
 
               {errorMsg && (

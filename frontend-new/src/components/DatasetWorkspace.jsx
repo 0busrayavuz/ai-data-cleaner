@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
   ArrowRight,
@@ -129,7 +129,10 @@ function getWorkspaceSourceInfo(view, workspace) {
 
 function formatValue(value) {
   if (value == null || value === '') return '—';
-  if (typeof value === 'number') return numberFormat.format(value);
+  if (typeof value === 'number') {
+    if (Number.isNaN(value) || !Number.isFinite(value)) return '—';
+    return numberFormat.format(value);
+  }
   return String(value);
 }
 
@@ -358,7 +361,7 @@ function DatasetWorkspace({
         <section className="workspace-studio">
           <div className="workspace-context-strip">
             <div>
-              <Sparkles size={18} color="#0c8f72" />
+              <Sparkles size={18} color="#00aeef" />
               <span>
                 <strong>{recommendations.length}</strong>
                 <small style={{ display: 'inline', marginLeft: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
@@ -478,7 +481,7 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
                 {chartData?.length ? (
                   <ResponsiveContainer width="100%" height={260}>
                     <BarChart data={chartData} margin={{ top: 12, right: 8, left: -15, bottom: 48 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(16, 41, 35, 0.08)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(11, 26, 56, 0.08)" />
                       <XAxis dataKey="label" angle={-28} textAnchor="end" interval={0} tick={{ fontSize: 11 }} />
                       <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                       <Tooltip
@@ -489,7 +492,7 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
                           fontSize: 12,
                         }}
                       />
-                      <Bar dataKey="count" fill="#0c8f72" radius={[7, 7, 0, 0]} />
+                      <Bar dataKey="count" fill="#00aeef" radius={[7, 7, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
@@ -508,7 +511,7 @@ function ProfileView({ profile, selectedColumn, onSelectColumn }) {
               <span>İlişki analizi</span>
               <h3>En güçlü korelasyonlar</h3>
             </div>
-            <Activity size={20} color="#0c8f72" />
+            <Activity size={20} color="#00aeef" />
           </div>
           {profile.correlations.length > 0 ? (
             <div className="workspace-correlation-list">
@@ -611,11 +614,11 @@ function ComparisonView({ comparison, onOpenStudio }) {
               <span>Kalite bileşenleri</span>
               <h3>Sorun sayısı değişimi</h3>
             </div>
-            <BarChart3 size={20} color="#0c8f72" />
+            <BarChart3 size={20} color="#00aeef" />
           </div>
           <ResponsiveContainer width="100%" height={310}>
             <BarChart data={healthChart} margin={{ top: 18, right: 12, left: 0, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(16, 41, 35, 0.08)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(11, 26, 56, 0.08)" />
               <XAxis dataKey="name" />
               <YAxis allowDecimals={false} />
               <Tooltip
@@ -627,7 +630,7 @@ function ComparisonView({ comparison, onOpenStudio }) {
                 }}
               />
               <Bar dataKey="before" name="Önce" fill="#e07a5f" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="after"  name="Sonra" fill="#0c8f72" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="after"  name="Sonra" fill="#00aeef" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
           <p className="comparison-method-note">
@@ -643,7 +646,7 @@ function ComparisonView({ comparison, onOpenStudio }) {
               <span>Yapısal etki</span>
               <h3>Tablo boyutu</h3>
             </div>
-            <TableProperties size={20} color="#0c8f72" />
+            <TableProperties size={20} color="#00aeef" />
           </div>
           <div className="comparison-structure-row">
             <span>Satır</span>
@@ -755,7 +758,7 @@ function PreviewTable({ title, rows }) {
     <div className="workspace-preview glass-panel">
       <div className="workspace-panel-heading">
         <div><span>İlk kayıtlar</span><h3>{title}</h3></div>
-        <Database size={20} color="#0c8f72" />
+        <Database size={20} color="#00aeef" />
       </div>
       {rows?.length ? (
         <div className="workspace-table-scroll">
