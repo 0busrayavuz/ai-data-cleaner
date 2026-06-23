@@ -46,6 +46,17 @@ from backend.modules.file_reader import read_file
 router = APIRouter()
 
 
+# ── Yardımcı fonksiyonlar ────────────────────────────────────────────────────
+
+def _safe_remove(path: str | None) -> None:
+    """Verilen dosya yolunu sessizce siler; dosya yoksa ya da hata olursa geçer."""
+    if path and os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+
+
 # ── Pydantic modeller ────────────────────────────────────────────────────────
 
 class Selection(BaseModel):
@@ -100,10 +111,12 @@ async def upload_file(
 
     try:
         df, meta = read_file(file_path)
-    except Exception as e:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        raise HTTPException(status_code=400, detail="Dosya okunamadı veya desteklenmeyen format. Lütfen geçerli bir CSV, XLSX veya TXT dosyası yükleyin.")
+    except Exception:
+        _safe_remove(file_path)
+        raise HTTPException(
+            status_code=400,
+            detail="Dosya okunamadı veya desteklenmeyen format. Lütfen geçerli bir CSV, XLSX veya TXT dosyası yükleyin.",
+        )
 
     dataset = Dataset(
         user_id=user.id,
@@ -115,9 +128,16 @@ async def upload_file(
         col_count=meta["col_count"],
         file_path=file_path,
     )
-    db.add(dataset)
-    db.commit()
-    db.refresh(dataset)
+    try:
+        db.add(dataset)
+        db.commit()
+        db.refresh(dataset)
+    except Exception:
+        # DB kaydı başarısız — diskteki dosyayı temizle (orphan önleme)
+        _safe_remove(file_path)
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Veri seti kaydedilemedi. Lütfen tekrar deneyin.")
+
     return {
         "dataset_id": dataset.id,
         "meta": meta,
@@ -188,9 +208,10 @@ def analyze(
     if chk.status in ("analyzing", "processing"):
         return {"status": chk.status, "message": "İşlem devam ediyor."}
 
-    # Önbellek kontrolü
+    # Önbellek kontrolü — temizlenmiş (cleaned) veri setleri için cache bypass edilir;
+    # böylece kullanıcı temizleme sonrası taze analiz sonuçları alır.
     analysis_path = os.path.join(OUTPUT_DIR, f"analysis_{dataset_id}.json")
-    if os.path.exists(analysis_path):
+    if os.path.exists(analysis_path) and chk.status != "cleaned":
         try:
             with open(analysis_path, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -266,13 +287,20 @@ def delete_dataset(
     dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
     if not dataset or dataset.user_id != user.id:
         raise HTTPException(status_code=404, detail="Veri seti bulunamadı.")
-    
-    # Optional: Delete files from disk as well to free up space
-    try:
-        if dataset.file_path and os.path.exists(dataset.file_path):
-            os.remove(dataset.file_path)
-    except Exception:
-        pass
+
+    # 1. Ham upload dosyasını sil
+    _safe_remove(dataset.file_path)
+
+    # 2. Temizlenmiş CSV çıktısını sil
+    _safe_remove(os.path.join(OUTPUT_DIR, f"cleaned_{dataset.filename}"))
+
+    # 3. Analiz cache JSON dosyasını sil
+    _safe_remove(os.path.join(OUTPUT_DIR, f"analysis_{dataset_id}.json"))
+
+    # 4. Bu dataset'e ait tüm HTML/PDF raporlarını sil (glob ile)
+    import glob as _glob
+    for report_file in _glob.glob(os.path.join(OUTPUT_DIR, f"report_{dataset_id}_*")):
+        _safe_remove(report_file)
 
     db.delete(dataset)
     db.commit()

@@ -142,6 +142,7 @@ def _apply_selections_to_dataset_async(
             )
 
             db = SessionLocal()
+            has_backup = False  # Başlangıç değeri — except bloğunda UnboundLocalError'ı önler
             try:
                 for log in result["logs"]:
                     db.add(
@@ -190,6 +191,16 @@ def _apply_selections_to_dataset_async(
                         os.remove(backup_output_path)
                     except Exception:
                         pass
+
+                # Eski analiz cache'ini temizle — temizleme sonrası yeniden analiz
+                # yapıldığında kullanıcı taze (temizlenmiş veriye ait) sonuçları görsün.
+                analysis_cache_path = os.path.join(OUTPUT_DIR, f"analysis_{dataset_id}.json")
+                if os.path.exists(analysis_cache_path):
+                    try:
+                        os.remove(analysis_cache_path)
+                        logger.info("Analiz cache temizlendi (dataset_id=%s).", dataset_id)
+                    except Exception:
+                        logger.warning("Analiz cache silinemedi (dataset_id=%s).", dataset_id)
 
             except Exception as db_err:
                 db.rollback()

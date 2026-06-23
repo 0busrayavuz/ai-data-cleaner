@@ -17,7 +17,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
-from backend.auth import create_access_token, get_current_user, get_password_hash, verify_password
+from backend.auth import create_access_token, create_refresh_token, get_current_user, get_password_hash, verify_password
 from backend.database import Dataset, CleaningTemplate, PasswordResetToken, Project, SessionLocal, User, get_db
 from backend.core.helpers import cleaned_disk_path
 
@@ -132,7 +132,36 @@ def login_user(request: Request, user: UserLogin, db: Session = Depends(get_db))
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Geçersiz email veya şifre.")
     access_token = create_access_token(data={"sub": db_user.email})
-    return {"access_token": access_token, "token_type": "bearer", "email": db_user.email}
+    refresh_token = create_refresh_token(data={"sub": db_user.email})
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "email": db_user.email,
+    }
+
+
+class RefreshBody(BaseModel):
+    refresh_token: str
+
+
+@router.post("/refresh")
+def refresh_token_endpoint(body: RefreshBody):
+    """Geçerli bir refresh token sunulduğunda yeni bir access_token döndürür."""
+    import jwt as pyjwt
+    from jwt.exceptions import PyJWTError
+    from backend.auth import SECRET_KEY, ALGORITHM
+    try:
+        payload = pyjwt.decode(body.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Geçersiz token tipi.")
+        email = payload.get("sub")
+        if not email:
+            raise HTTPException(status_code=401, detail="Token geçersiz.")
+    except PyJWTError:
+        raise HTTPException(status_code=401, detail="Refresh token süresi dolmuş veya geçersiz.")
+    new_access_token = create_access_token(data={"sub": email})
+    return {"access_token": new_access_token, "token_type": "bearer"}
 
 
 @router.get("/me")
