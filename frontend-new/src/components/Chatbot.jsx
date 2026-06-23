@@ -5,10 +5,17 @@ import { getStoredToken, sendAssistantChat } from '../services/api';
 
 const WELCOME = {
   id: 'welcome',
-  text: 'Merhaba! Veri temizliği veya platform özellikleri hakkında size nasıl yardımcı olabilirim?',
+  text: 'Merhaba! Ben PrepWise veri asistanıyım. Veri temizleme teknikleri, eksik veriler, aykırı değerler veya platformun kullanımı hakkında bana her şeyi sorabilirsiniz.',
   sender: 'bot',
   skipHistory: true,
 };
+
+const SUGGESTIONS = [
+  'Veri setimdeki eksik değerleri nasıl doldurabilirim?',
+  'Aykırı değer (outlier) analizi nasıl yapılıyor?',
+  'Temizleme şablonları nedir, nasıl kullanırım?',
+  'Kategorik verilerle sayısal veriler arasındaki fark nedir?',
+];
 
 function toGeminiMessages(list) {
   return list
@@ -69,6 +76,30 @@ const Chatbot = ({ onNeedAuth, isLoggedIn = false }) => {
     }
   };
 
+  const handleSendSuggestion = async (text) => {
+    if (sending) return;
+    if (!getStoredToken()) {
+      onNeedAuth?.();
+      return;
+    }
+    const userMsg = { id: Date.now(), text, sender: 'user' };
+    const nextList = [...messages, userMsg];
+    setInputValue('');
+    setChatError('');
+    setMessages(nextList);
+    setSending(true);
+
+    try {
+      const payload = toGeminiMessages(nextList);
+      const { reply } = await sendAssistantChat(payload);
+      setMessages((prev) => [...prev, { id: Date.now() + 1, text: reply, sender: 'bot' }]);
+    } catch (err) {
+      setChatError(err?.message || 'Asistan yanıt veremedi.');
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className={`chatbot-wrapper ${isOpen ? 'open' : ''}`}>
       {isOpen && (
@@ -100,6 +131,30 @@ const Chatbot = ({ onNeedAuth, isLoggedIn = false }) => {
                 <div className="message-bubble">{msg.text}</div>
               </div>
             ))}
+            
+            {/* Önerilen Sorular - Eğer kullanıcı henüz bir şey yazmadıysa ve giriş yaptıysa */}
+            {isLoggedIn && messages.length === 1 && !sending && (
+              <div className="chatbot-suggestions fade-in">
+                <p className="suggestions-title">💡 Şunları sorabilirsiniz:</p>
+                <div className="suggestions-list">
+                  {SUGGESTIONS.map((s, i) => (
+                    <button 
+                      key={i} 
+                      type="button" 
+                      className="suggestion-btn" 
+                      onClick={() => {
+                        setInputValue(s);
+                        // setTimeout ile inputValue'nun state'e geçmesini beklemeden doğrudan gönder
+                        handleSendSuggestion(s);
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {sending ? (
               <div className="chat-message bot" aria-live="polite">
                 <div className="message-bubble chatbot-typing">Yazıyor…</div>
@@ -108,7 +163,13 @@ const Chatbot = ({ onNeedAuth, isLoggedIn = false }) => {
             <div ref={messagesEndRef} />
           </div>
 
-          <form className="chatbot-input-area" onSubmit={handleSend}>
+          <form 
+            className="chatbot-input-area" 
+            onSubmit={(e) => {
+              if (e) e.preventDefault();
+              handleSend(e);
+            }}
+          >
             <input
               type="text"
               placeholder={isLoggedIn ? 'Bir soru sorun…' : 'Önce giriş yapın…'}

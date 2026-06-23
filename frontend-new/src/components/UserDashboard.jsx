@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Activity, Database, Clock, Download, FileSearch, FileSpreadsheet, History, Plus, RefreshCw, Trash2, FolderPlus } from 'lucide-react';
+import { Activity, Database, Clock, Download, FileSearch, FileSpreadsheet, History, Plus, RefreshCw, Trash2, FolderPlus, FolderMinus } from 'lucide-react';
 import { fetchMyDatasets, downloadCleanedDataset, downloadAuditExport, fetchProjectTimeline, downloadQualityReport, deleteDataset, deleteProject, createProject } from '../services/api';
+import ConfirmModal from './ConfirmModal';
 import './UserDashboard.css';
 
 const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset, onProjectsChanged }) => {
@@ -11,6 +12,12 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset, onProjectsChan
   const [timeline, setTimeline] = useState(null);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [timelineError, setTimelineError] = useState('');
+
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false });
+
+  const openConfirm = (opts) => setConfirmModal({ isOpen: true, ...opts });
+  const closeConfirm = () => setConfirmModal({ isOpen: false });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -30,40 +37,62 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset, onProjectsChan
     load();
   }, [load]);
 
-  const handleDeleteDataset = async (id) => {
-    if (!window.confirm('Bu veri setini silmek istediğinize emin misiniz?')) return;
-    try {
-      await deleteDataset(id);
-      load();
-    } catch (e) {
-      alert(e.message);
-    }
+  const handleDeleteDataset = (id) => {
+    openConfirm({
+      title: 'Veri setini sil',
+      message: 'Bu veri seti kalıcı olarak silinecek. Bu işlem geri alınamaz.',
+      warning: 'Veri setine ait temizlenmiş dosyalar ve raporlar da diskten kaldırılacak.',
+      confirmText: 'Evet, sil',
+      cancelText: 'İptal',
+      danger: true,
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          await deleteDataset(id);
+          load();
+        } catch (e) {
+          alert(e.message);
+        }
+      },
+      onCancel: closeConfirm,
+    });
   };
 
-  const handleDeleteProject = async () => {
+  const handleDeleteProject = () => {
     if (!filterProjectId) return;
-    if (!window.confirm('Bu projeyi silmek istediğinize emin misiniz? İçindeki veri setleri projesiz kalacaktır.')) return;
-    try {
-      await deleteProject(filterProjectId);
-      setFilterProjectId('');
-      load();
-      onProjectsChanged?.();
-    } catch (e) {
-      alert(e.message);
-    }
+    const projectName = projects.find((p) => String(p.id) === String(filterProjectId))?.name || 'Bu proje';
+    openConfirm({
+      title: `"${projectName}" projesini sil`,
+      message: 'Bu projeyi silmek istediğinize emin misiniz?',
+      warning: 'Projenin içindeki tüm veri setleri projesiz kalacak! Veri setleri silinmeyecek, ancak proje bağlantıları kaldırılacak.',
+      confirmText: 'Evet, projeyi sil',
+      cancelText: 'İptal',
+      danger: true,
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          await deleteProject(filterProjectId);
+          setFilterProjectId('');
+          load();
+          onProjectsChanged?.();
+        } catch (e) {
+          alert(e.message);
+        }
+      },
+      onCancel: closeConfirm,
+    });
   };
 
-  const handleCreateProject = async () => {
+  const handleCreateProject = () => {
     const name = window.prompt('Yeni proje adı:');
     if (!name || !name.trim()) return;
-    try {
-      const p = await createProject(name);
-      setFilterProjectId(p.id);
-      load();
-      onProjectsChanged?.();
-    } catch (e) {
-      alert(e.message);
-    }
+    createProject(name)
+      .then((p) => {
+        setFilterProjectId(p.id);
+        load();
+        onProjectsChanged?.();
+      })
+      .catch((e) => alert(e.message));
   };
 
   useEffect(() => {
@@ -122,6 +151,7 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset, onProjectsChan
   };
 
   return (
+    <>
     <div className="dashboard-container">
       <header className="dashboard-header">
         <div>
@@ -320,6 +350,20 @@ const UserDashboard = ({ userEmail, onNewAnalysis, onOpenDataset, onProjectsChan
         </>
       )}
     </div>
+
+      {/* ── ConfirmModal ─ proje/dataset silme için ────────────────────── */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        warning={confirmModal.warning}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        danger={confirmModal.danger}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={confirmModal.onCancel || closeConfirm}
+      />
+    </>
   );
 };
 

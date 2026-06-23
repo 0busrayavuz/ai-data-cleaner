@@ -8,42 +8,115 @@ const _base =
 // Tüm backend endpoint'leri /api/v1 prefix'i altında
 export const API_BASE = `${_base}/api/v1`;
 
+const TOKEN_KEY = 'token';
+const REFRESH_KEY = 'refresh_token';
+
 export function getStoredToken() {
-  return sessionStorage.getItem('token') || localStorage.getItem('token');
+  return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
 }
 
-export function setAuthToken(token, rememberMe) {
+export function getStoredRefreshToken() {
+  return localStorage.getItem(REFRESH_KEY) || sessionStorage.getItem(REFRESH_KEY);
+}
 
+export function setAuthToken(token, rememberMe, refreshToken) {
   try {
-    localStorage.removeItem('token');
-    sessionStorage.removeItem('token');
-    if (rememberMe) {
-      localStorage.setItem('token', token);
-    } else {
-      sessionStorage.setItem('token', token);
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+    sessionStorage.removeItem(REFRESH_KEY);
+
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem(TOKEN_KEY, token);
+    if (refreshToken) {
+      // Refresh token'ı her zaman localStorage'da sakla (sekme kapansa bile hatırlansın)
+      localStorage.setItem(REFRESH_KEY, refreshToken);
     }
   } catch {
-    localStorage.setItem('token', token);
+    localStorage.setItem(TOKEN_KEY, token);
+    if (refreshToken) localStorage.setItem(REFRESH_KEY, refreshToken);
   }
 }
 
 export function clearAuthToken() {
-  localStorage.removeItem('token');
-  sessionStorage.removeItem('token');
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REFRESH_KEY);
+  sessionStorage.removeItem(REFRESH_KEY);
 }
 
-// Create Axios instance
+// ── Axios instance ────────────────────────────────────────────────────────────
 const api = axios.create({
   baseURL: API_BASE,
 });
 
+// Request: her istekte geçerli access token'ı header'a ekle
 api.interceptors.request.use((config) => {
   const token = getStoredToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+// Response: 401 alındığında refresh token ile yeni access token al
+let _isRefreshing = false;
+let _failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  _failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  _failedQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    // Refresh endpoint'inin kendisi 401 dönerse sonsuz döngüye girme
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/refresh')) {
+      if (_isRefreshing) {
+        // Başka bir refresh devam ediyorsa kuyruğa ekle
+        return new Promise((resolve, reject) => {
+          _failedQueue.push({ resolve, reject });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      _isRefreshing = true;
+
+      const refreshToken = getStoredRefreshToken();
+      if (!refreshToken) {
+        _isRefreshing = false;
+        clearAuthToken();
+        window.dispatchEvent(new CustomEvent('auth:expired'));
+        return Promise.reject(error);
+      }
+
+      try {
+        const { data } = await axios.post(`${API_BASE}/refresh`, { refresh_token: refreshToken });
+        const newAccessToken = data.access_token;
+        // Yeni access token'ı kaydet (rememberMe durumunu koru)
+        const inLocal = !!localStorage.getItem(TOKEN_KEY);
+        (inLocal ? localStorage : sessionStorage).setItem(TOKEN_KEY, newAccessToken);
+        processQueue(null, newAccessToken);
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        clearAuthToken();
+        window.dispatchEvent(new CustomEvent('auth:expired'));
+        return Promise.reject(refreshError);
+      } finally {
+        _isRefreshing = false;
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 function parseDetail(error) {
   const data = error?.response?.data;

@@ -1,16 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   CheckCircle,
-  AlertCircle,
   Download,
-  ChevronDown,
   ChevronRight,
   Check,
   BookmarkPlus,
   Wand2,
-  AlertTriangle,
-  FileCode2,
-  Cpu,
 } from 'lucide-react';
 import './AnalysisResults.css';
 import {
@@ -19,101 +14,11 @@ import {
   applyTemplateToDataset,
   downloadQualityReport,
   getDatasetStatus,
-} from '../services/api';
+} from '../../services/api';
 
-/* ── Category meta ───────────────────────────────────────────────────────── */
-
-const FORMAT_DEFAULTS = {
-  numeric_as_string: 'to_numeric',
-  date_as_string: 'to_datetime',
-  whitespace: 'strip_whitespace',
-  case_inconsistency: 'normalize_case',
-  fuzzy_duplicates: 'semantic_merge',
-};
-
-const CATEGORY_LABELS = {
-  missing: 'Eksik veri',
-  outlier: 'Aykırı değer',
-  format: 'Format',
-  feature: 'Özellik',
-};
-
-const CATEGORY_ICONS = {
-  missing: AlertCircle,
-  outlier: AlertTriangle,
-  format: FileCode2,
-  feature: Cpu,
-};
-
-/* ── FloatingActionBar ───────────────────────────────────────────────────── */
-
-function FloatingActionBar({ selectedCount, totalCount, onApply, loading, applied }) {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    let interval;
-    if (loading) {
-      setProgress(0);
-      interval = setInterval(() => {
-        setProgress((p) => {
-          const remaining = 95 - p;
-          const step = Math.max(0.5, remaining * 0.1);
-          return Math.min(95, p + step);
-        });
-      }, 300);
-    } else if (applied) {
-      setProgress(100);
-    } else {
-      setProgress(0);
-    }
-    return () => clearInterval(interval);
-  }, [loading, applied]);
-
-  const visible = !applied && selectedCount > 0;
-
-  return (
-    <div className={`studio-fab ${visible ? 'visible' : ''}`} role="status" aria-live="polite">
-      <div className="studio-fab-info">
-        <div className="studio-fab-count">{selectedCount} / {totalCount}</div>
-        <div className="studio-fab-label">
-          {selectedCount === 1 ? 'işlem seçildi' : 'işlem seçildi'}
-        </div>
-      </div>
-      <button
-        type="button"
-        className="studio-fab-apply"
-        onClick={onApply}
-        disabled={loading || selectedCount === 0}
-      >
-        {loading ? `Uygulanıyor... %${Math.round(progress)}` : 'Seçilenleri Uygula →'}
-      </button>
-      {loading && (
-        <div className="studio-fab-progress">
-          <div className="studio-fab-progress-bar" style={{ width: `${progress}%` }} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── CategoryChips ───────────────────────────────────────────────────────── */
-
-function CategoryChips({ categoryCount }) {
-  return (
-    <div className="studio-stats-bar">
-      {Object.entries(categoryCount).map(([cat, count]) => {
-        const CatIcon = CATEGORY_ICONS[cat] || AlertCircle;
-        return (
-          <span key={cat} className={`studio-stat-chip chip-${cat}`}>
-            <CatIcon size={14} />
-            <b>{count}</b>
-            {CATEGORY_LABELS[cat] || cat}
-          </span>
-        );
-      })}
-    </div>
-  );
-}
+import { FORMAT_DEFAULTS, CATEGORY_LABELS } from './AnalysisConstants';
+import { FloatingActionBar, CategoryChips } from './AnalysisHelpers';
+import RecommendationCard from './RecommendationCard';
 
 /* ── Main component ──────────────────────────────────────────────────────── */
 
@@ -385,93 +290,17 @@ const AnalysisResults = ({
       {/* Recommendations */}
       <div className="recommendations-list">
         {recommendations.map((rec, i) => {
-          const isExpanded = expandedIndex === i;
-          const isSelected = selectedIds.includes(rec.id);
-          const RecIcon = CATEGORY_ICONS[rec.category] || AlertCircle;
-
           return (
-            <div
+            <RecommendationCard
               key={rec.id || i}
-              className={`rec-item rec-${rec.category} ${isExpanded ? 'expanded' : ''} ${!isSelected ? 'unselected' : ''}`}
-            >
-              <div className="rec-header">
-                {/* Checkbox */}
-                <label className="checkbox-wrapper item-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={(e) => handleSelectOne(rec.id, e.target.checked)}
-                  />
-                  <div className="checkbox-custom"><Check size={14} className="check-icon" /></div>
-                </label>
-
-                {/* Title group — clickable to expand */}
-                <div
-                  className="rec-title-group"
-                  onClick={() => toggleExpand(i)}
-                  style={{ cursor: 'pointer', flex: 1 }}
-                >
-                  <RecIcon size={18} className="rec-icon" />
-                  <span className="rec-col-name">{rec.column}</span>
-                </div>
-
-                {/* Actions */}
-                <div className="rec-actions">
-                  <span className="rec-type">{CATEGORY_LABELS[rec.category] || rec.category}</span>
-                  <button
-                    type="button"
-                    className={`btn-expand ${isExpanded ? 'active' : ''}`}
-                    onClick={() => toggleExpand(i)}
-                  >
-                    {isExpanded ? 'Kapat' : 'Detay'}
-                    {isExpanded ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Detail panel */}
-              {isExpanded && (
-                <div className="rec-details">
-                  <p className="rec-desc">{rec.summary}</p>
-                  {rec.options && rec.options.length > 0 && (
-                    <div className="options-container">
-                      <h5 className="options-title">Çözüm yöntemi seçin</h5>
-                      <div className="options-grid">
-                        {rec.options.map((opt) => {
-                          const isOptionSelected = selectedMethods[rec.id] === opt.id;
-                          return (
-                            <label
-                              key={opt.id}
-                              className={`option-card ${isOptionSelected ? 'selected' : ''}`}
-                            >
-                              <input
-                                type="radio"
-                                name={`method-${rec.id}`}
-                                value={opt.id}
-                                checked={isOptionSelected}
-                                onChange={() =>
-                                  setSelectedMethods({ ...selectedMethods, [rec.id]: opt.id })
-                                }
-                              />
-                              <div className="option-radio-dot" />
-                              <div className="option-info">
-                                <div className="option-name-row">
-                                  <span className="option-name">{opt.name}</span>
-                                  {opt.tags && opt.tags.map((tag) => (
-                                    <span key={tag} className="option-tag">{tag}</span>
-                                  ))}
-                                </div>
-                                <p className="option-desc">{opt.desc}</p>
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+              rec={rec}
+              isExpanded={expandedIndex === i}
+              isSelected={selectedIds.includes(rec.id)}
+              selectedMethod={selectedMethods[rec.id]}
+              onToggleExpand={() => toggleExpand(i)}
+              onSelectOne={handleSelectOne}
+              onMethodChange={(recId, optId) => setSelectedMethods({ ...selectedMethods, [recId]: optId })}
+            />
           );
         })}
       </div>

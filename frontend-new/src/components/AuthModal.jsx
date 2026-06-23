@@ -127,7 +127,7 @@ const AuthModal = ({ isOpen, onClose, onLogin }) => {
         }
         setLoginFieldErrors({});
         const data = await loginUser(loginEmail.trim(), loginPassword);
-        setAuthToken(data.access_token, rememberMe);
+        setAuthToken(data.access_token, rememberMe, data.refresh_token);
         if (onLogin) onLogin({ email: data.email });
       } else if (view === 'register') {
         const fieldErr = validateRegister();

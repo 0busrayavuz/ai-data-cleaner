@@ -10,7 +10,7 @@ import './App.css'
 import Hero from './components/Hero'
 import FileUpload from './components/FileUpload'
 import AnalysisCards from './components/AnalysisCards'
-import AnalysisResults from './components/AnalysisResults'
+import AnalysisResults from './components/workspace/AnalysisResults'
 import HowItWorks from './components/HowItWorks'
 import FAQ from './components/FAQ'
 import Footer from './components/Footer'
@@ -100,6 +100,19 @@ function App() {
     setUserEmail('')
     setCurrentView('home')
   }
+
+  // Refresh token süresi de dolunca interceptor bu event'i fırlatır → otomatik çıkış
+  useEffect(() => {
+    const onExpired = () => {
+      clearAuthToken()
+      setIsLoggedIn(false)
+      setUserEmail('')
+      setCurrentView('home')
+      setIsAuthOpen(true) // login modal'ını aç
+    }
+    window.addEventListener('auth:expired', onExpired)
+    return () => window.removeEventListener('auth:expired', onExpired)
+  }, [])
 
   const openDatasetWorkspace = (id, view = 'profile') => {
     setDatasetId(Number(id))
