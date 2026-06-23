@@ -1,0 +1,4 @@
+Name	Age	Score
+Alice	25	85.5
+Bob	30	90.0
+Charlie	35	95.5
