@@ -1,110 +1,195 @@
-# 🚀 AI Data Cleaner - Proje Başucu Rehberi
+﻿# 🎓 PrepWise — Akıllı Veri Ön İşleme ve Kalite Asistanı
 
-AI Data Cleaner, kaba veri setlerindeki tutarsızlıkları, eksikleri ve aykırılıkları **yapay zeka ve gelişmiş istatistiksel modeller** kullanarak otonom şekilde çözen, son teknoloji bir "Akıllı Veri Temizleme ve Özellik Mühendisliği" (Feature Engineering) platformudur.
+**PrepWise**, ham veri setlerindeki eksiklikler, aykırı değerler ve format tutarsızlıklarını **yapay zeka ve istatistiksel modeller** aracılığıyla tespit eden, temizleme önerileri sunan ve kullanıcı onayıyla temizlenmiş çıktı üreten modern bir veri ön işleme platformudur.
 
-Kullanıcıların veri bilimi geçmişi olmasa bile kompleks işlemleri tek tıkla halledebilmesi için hem güçlü bir arka plan (Backend) hem de zarif ve modern bir kullanıcı arayüzüyle (Frontend) tasarlanmıştır. Tüm sistem tamamen kapalı ve bağımsız olarak Docker konteynerleri üzerinde çalışır.
-
----
-
-## Kapsam ve Sınırlar
-
-Bu proje küçük ve orta ölçekli tablo verileri için tasarlanmıştır. Varsayılan dosya
-yükleme sınırı 20 MB'dir. Bu sınır, bitirme projesi kapsamında güvenli demo,
-makul analiz süresi ve bellek tüketimini kontrol altında tutmak için bilinçli
-olarak seçilmiştir.
-
-Veri seti boyutu önemlidir; çünkü sistem CSV/Excel dosyasını Pandas ile belleğe
-alır ve MICE, KNN, DBSCAN, Isolation Forest, LOF gibi yöntemler veri büyüdükçe
-daha fazla zaman ve bellek kullanır. Daha büyük veri senaryoları için örnekleme,
-parça parça okuma (chunk processing), kalıcı görev kuyruğu ve dağıtık işleme
-gelecek çalışma olarak planlanabilir.
-
-AI Data Cleaner, kullanıcı onayı olmadan ham veriyi değiştirmez. Sistem analiz
-eder, seçenekleri sunar, uygulanan işlemleri raporlar ve temizlenmiş çıktıyı ayrı
-dosya olarak üretir.
+Veri bilimi geçmişi olmayan kullanıcılar bile tek arayüzden karmaşık veri hazırlama adımlarını yönetebilir. Sistem, hem güçlü bir Python/FastAPI arka ucu hem de Glassmorphism estetiğiyle tasarlanmış React tabanlı bir ön yüzden oluşur. Tüm bileşenler Docker konteynerleri üzerinde bağımsız çalışır.
 
 ---
 
-## 🛠 Kullanılan Teknolojiler ve Mimari
+## 📌 Kapsam ve Sınırlar
 
-Proje, güncel sanayi standartlarına uygun bir **Microservices (Mikroservis)** yapısı felsefesiyle tasarlanmıştır. Piyasada yer edinmiş, performanslı teknolojiler tercih edilmiştir:
-
-### ⚙️ Backend (Arka Plan - Veri & Yapay Zeka Merkezi)
-*   **Çatı (Framework):** Python tabanlı `FastAPI`. Sunucu asenkron yapısıyla son derece hızlıdır. Tıkanmadan paralel veri analizi yapabilir.
-*   **Veri Manipülasyonu:** `Pandas` ve `NumPy`. Küçük ve orta ölçekli CSV/Excel veri setleri üzerinde hızlı profil çıkarma, analiz ve temizlik işlemleri yürütür.
-*   **Makine Öğrenmesi (ML) Modelleri:** `Scikit-learn`
-    *   *DBSCAN:* Yoğunluk tabanlı mekansal kümeleme. Çok yönlü (multivariate) bağlamsal aykırıları (Outlier) siler.
-    *   *Isolation Forest (İzolasyon Ormanı):* Anormallikleri izole etmek için karar ağaçları topluluğunu kullanır.
-    *   *Eksik Veri Tamamlama (Imputation):* K-Nearest Neighbors (KNNImputer) ve MICE yöntemleri entegredir.
-*   **Veritabanı ve ORM:** `PostgreSQL` veri saklama merkezi olarak kullanılır. Veritabanı bağlayıcısı olarak `SQLAlchemy` (ORM) görev yapar. İşlem geçmişi, kalite raporları, kullanıcı kayıtları relasyonel bir düzende tablolanır.
-
-### 🎨 Frontend (Ön Yüz - Kullanıcı Arayüzü)
-*   **Kütüphane:** Modern, bileşen (component) mimarili `React.js` (JavaScript).
-*   **Derleyici:** `Vite`. Eski nesil Webpack'e kıyasla anında canlı sunucu başlangıcı ve mikro saniyelerde derleme (build) imkânı sunar.
-*   **Tasarım Mimarisi:** Glassmorphism (Buzlu Cam) efektleri. Sistem CSS Grid ve Flexbox üzerinde, fütüristik renk paletleri ve pürüzsüz animasyonlarla desteklenerek "Premium" bir hissiyat yaratır.
-*   **İkonlar ve Deneyim (UX):** `lucide-react` ikon setleri ile temiz ve profesyonel bir tipografi sunulmuştur.
-*   **Web Sunucusu:** React kodları derlendikten sonra üretim ortamı (Production) için çok hafif ve uçtan uca hızlı bir HTTP sunucusu olan `Nginx` üzerinden yayınlanır.
-
-### 🐳 Geliştirme Operasyonları (DevOps)
-*   **Konteynerizasyon:** Tüm projeyi işletim sisteminizden bağımsız hale getiren `Docker`. Uygulama 3 ana bileşenden oluşur:
-    1.  `cleaner-postgres`: PostgreSQL hizmeti.
-    2.  `cleaner-backend`: FastAPI ve Python analiz motoru.
-    3.  `cleaner-frontend`: Nginx üzerinden sunulan React arayüzü.
-*   **Orkestrasyon:** `docker-compose.yml` ile tüm servisler tek satır komut (`docker-compose up -d`) ile birbirleriyle güvenli ağlarda haberleşerek ayağa kalkar.
-*   **Kalıcı Depolama (Volumes):** Docker yeniden başlasa bile veri kaybolmasın diye yüklenen CSV'ler, Temizlenmiş CSV'ler (`outputs`) ve Postgres Meta verileri doğrudan sizin sabit diskinizle (Volume map) eşleştirilmiştir.
+| Konu | Detay |
+|---|---|
+| **Hedef Veri Tipi** | Küçük–orta ölçekli tablo verisi (CSV / XLSX) |
+| **Dosya Boyutu Sınırı** | 20 MB (bellek tüketimini kontrol altında tutmak için) |
+| **Kullanıcı Onayı** | Sistem ham veriyi onaysız değiştirmez; önce analiz eder, sonra kullanıcı seçer |
+| **Arka Plan İşlemleri** | FastAPI `BackgroundTasks` tabanlı; sunucu kapanırsa yarım kalan görevler `error` durumuna alınır |
+| **Büyük Veri Notu** | Chunk processing, kalıcı görev kuyruğu (Celery/ARQ) ve dağıtık işleme gelecek çalışma olarak planlanabilir |
 
 ---
 
-## 🔬 Core Flow — Proje Temel İşleyiş Akışı
+## 🛠 Teknoloji Yığını
 
-1.  **Yükleme Aşaması:** Kullanıcı "Dosya Seçin" alanına dosyasını (ör. `.csv`) sürükleyip bırakır. Arayüz bunu REST API üzerinden `/upload` uç noktasına iletir. UUID şifrelemesi ve metadata çıkarımları (Satır sayısı, Formatı) ile Postgres'e kaydedilir.
-2.  **Veri Analizi ve Profil Çıkarma:** Arka planda `report/analyze` tetiklenir.
-    *   Boş hücrelerin (%) yüzdesi MICE, Median, Fill yöntemleriyle eşleşir.
-    *   Aykırı satırlar IQR ve üç farklı yapay zeka algoritması (DBSCAN, Isolation Forest, Local Outlier Factor) tarafından taranır.
-    *   Tarih/İsim formatı tutarsızlıkları bulunur.
-    *   Verinin Skewness (Çarpıklık) değerlerine bakılarak Logaritmik veya Z-Score dönüştürücüler planlanır.
-3.  **Önerilerin Sunulması:** Ön yüze aktarılan JSON yapısındaki bu dev rapor şık bir "Analiz Önerileri Kutucukları (Checkboxes)" sistemine dönüşür. Kullanıcı her sütun için ne tarz bir işlem uygulayacağını Radio Button'lar arasından seçer.
-4.  **Uygulama ve Çıktı Üretimi (Pipeline):** Seçilen düzeltmeler (Selections) topluca `/apply` uç noktasına gider. Pandas üzerinde veri sırayla tüm tıraşlamalardan, dönüşümlerden ve yamalardan geçer.
-5.  **Sonuç:** Pırıl pırıl temizlenen algoritma veri seti diske `temizlenmis_veri_[ID].csv` olarak kaydedilir ve indirme linki aktif olur. Yapılan tüm operasyon kalemleri DB üzerine saniye saniye "Audit Log" (İşlem Günlüğü) olarak işlenir.
+### ⚙️ Backend
+
+| Teknoloji | Kullanım Amacı |
+|---|---|
+| **Python / FastAPI** | Ana arka uç çatısı; asenkron, yüksek performanslı REST API |
+| **Pandas & NumPy** | CSV/XLSX okuma, profil çıkarma, temizleme pipeline'ı |
+| **Scikit-learn** | DBSCAN, Isolation Forest, LOF (aykırı değer tespiti); KNNImputer & MICE (eksik değer doldurma) |
+| **SQLAlchemy + PostgreSQL** | Kullanıcı kayıtları, dataset meta verisi, işlem geçmişi |
+| **Google Gemini AI** | Gömülü AI chatbot asistanı (`/assistant/chat` endpoint) |
+| **SlowAPI** | IP tabanlı rate limiting |
+| **JWT (python-jose)** | Kimlik doğrulama ve yetkilendirme |
+
+**Backend modülleri (`backend/modules/`):**
+
+| Modül | Sorumluluk |
+|---|---|
+| `file_reader.py` | CSV / XLSX okuma ve format tespiti |
+| `missing_value.py` | Eksik değer analizi; Median, KNN, MICE stratejileri |
+| `outlier_detector.py` | IQR, DBSCAN, Isolation Forest, LOF tabanlı aykırı değer tespiti |
+| `format_checker.py` | Tarih, isim, telefon vb. format tutarsızlığı tespiti |
+| `feature_engineering.py` | Skewness analizi; Log, Z-Score, Winsorize dönüşümleri |
+| `recommendation.py` | Analiz sonuçlarını öneri kartlarına dönüştürme |
+| `pipeline.py` | Seçili temizleme adımlarını sıralı uygulama |
 
 ---
 
-## 🔒 Projenin Güçlü Yönleri (Vurgulanması Gerekenler)
-- **Modülerlik:** Her analistin taktikleri ayrı dosyalardadır (`outlier_detector.py`, `feature_engineering.py`). Yeni bir algoritma eklemek kod yapısını bozmaz.
-- **Kullanıcı Kararı (Otonomi Kontrolü):** Temizlik katı kurallarla habersiz yapılmaz. Aykırı değer bulunan satırın silineceğine veya yapay zeka ile %5 - %95 bandında sıkıştırılacağına (Winsorize) kullanıcı şeffaf arayüz ile karar verir.
-- **Kesinlikle CORS & Bağlantı Problemleri Yoktur:** Hem container yapısındaki güvenlik zırhı (Port atamaları) hem de `localhost` proxy adaptasyonu tam stabil sağlanmıştır.
+### 🎨 Frontend
+
+| Teknoloji | Kullanım Amacı |
+|---|---|
+| **React 18 + Vite** | Bileşen tabanlı, hızlı derleme ve HMR |
+| **Vanilla CSS** | Glassmorphism, gradient animasyonlar, CSS Grid & Flexbox |
+| **lucide-react** | Tutarlı ikon seti |
+| **Nginx** | Üretim ortamında static dosya sunumu ve `/api` reverse proxy |
+
+**Önemli bileşenler (`frontend-new/src/components/`):**
+
+| Bileşen | Açıklama |
+|---|---|
+| `Hero` | Ana sayfa hero bölümü |
+| `FileUpload` | Sürükle-bırak dosya yükleme |
+| `AnalysisCards` | Analiz durum kartları |
+| `DatasetWorkspace` | Dataset bazlı iş akışı görünümü |
+| `UserDashboard` | Kullanıcının proje ve dataset özet paneli |
+| `AccountSettings` | Profil, güvenlik ve kullanım istatistikleri sekmeleri |
+| `Chatbot` | Gemini tabanlı AI asistan arayüzü |
+| `AuthModal` | Giriş / Kayıt / Şifre sıfırlama modal'ı |
+| `HowItWorks` | Adım adım nasıl çalışır bölümü |
+| `FAQ` | Sık sorulan sorular bölümü |
+| `workspace/AnalysisResults` | Analiz önerileri, karşılaştırma ve profil görünümleri |
+| `workspace/ComparisonView` | Temizleme öncesi / sonrası karşılaştırma |
+| `workspace/ProfileView` | Sütun bazlı veri profili |
 
 ---
 
-## 🚀 Kurulum Önkoşulları
+### 🐳 DevOps
 
-Projeyi çalıştırmadan önce proje kök dizininde bir `.env` dosyası oluşturun. Örnek dosyayı kopyalayarak başlayabilirsiniz:
+| Servis | Container Adı | Port |
+|---|---|---|
+| PostgreSQL 15 | `cleaner-postgres` | `127.0.0.1:5432` |
+| FastAPI Backend | `cleaner-backend` | `8000` |
+| React (Nginx) Frontend | `cleaner-frontend` | `80` |
+
+Tüm servisler `docker-compose.yml` ile tek komutta ayağa kalkar. Upload ve output dosyaları kalıcı volume ile disk üzerinde tutulur.
+
+---
+
+## 🔬 Temel İşleyiş Akışı
+
+```
+1. Dosya Yükleme  →  2. Analiz  →  3. Öneri Seçimi  →  4. Pipeline Uygulaması  →  5. Çıktı ve Rapor
+```
+
+1. **Yükleme:** Kullanıcı CSV/XLSX dosyasını sürükle-bırak ile yükler. Backend UUID atar, meta veriyi PostgreSQL'e kaydeder.
+2. **Analiz:** `report/analyze` tetiklenir — eksik değer yüzdesi, aykırı değerler, format hataları ve skewness değerleri hesaplanır.
+3. **Öneri Kartları:** JSON raporu şık checkbox/radio kartlarına dönüştürülür; kullanıcı her sütun için strateji seçer.
+4. **Pipeline:** Seçimler `/apply` endpoint'ine gönderilir; veriler tüm temizleme adımlarından geçirilir.
+5. **Çıktı:** Temizlenmiş CSV `outputs/` klasörüne kaydedilir; indirme bağlantısı aktif olur. Tüm işlemler audit log olarak veritabanına yazılır.
+
+---
+
+## 🔑 API Endpoint'leri
+
+| Prefix | Router | Açıklama |
+|---|---|---|
+| `/api/v1/auth/...` | `auth_router` | Kayıt, giriş, token yenileme, şifre sıfırlama |
+| `/api/v1/datasets/...` | `dataset_router` | Yükleme, analiz, uygulama, indirme |
+| `/api/v1/projects/...` | `project_router` | Proje oluşturma ve listeleme |
+| `/api/v1/templates/...` | `template_router` | Temizleme şablonları |
+| `/api/v1/assistant/chat` | `assistant_router` | Gemini AI chatbot |
+
+---
+
+## 🚀 Kurulum
+
+### Gereksinimler
+- Docker ve Docker Compose yüklü olmalıdır.
+
+### 1. `.env` Dosyasını Oluşturun
 
 ```bash
 cp .env.example .env
-# Ardından .env dosyasını açıp POSTGRES_PASSWORD ve SECRET_KEY değerlerini güncelleyin.
 ```
+
+`.env` dosyasını açıp en az şu değerleri güncelleyin:
 
 | Değişken | Zorunlu | Açıklama |
 |---|---|---|
-| `POSTGRES_PASSWORD` | ✅ | Güçlü ve benzersiz bir parola seçin |
-| `SECRET_KEY` | ✅ | JWT imzalama anahtarı; `openssl rand -hex 32` ile üretilebilir |
+| `POSTGRES_PASSWORD` | ✅ | Güçlü ve benzersiz bir parola |
+| `SECRET_KEY` | ✅ | JWT anahtarı; `openssl rand -hex 32` ile üretin |
 | `POSTGRES_USER` | — | Varsayılan: `postgres` |
 | `POSTGRES_DB` | — | Varsayılan: `cleaner_db` |
+| `GEMINI_API_KEY` | — | AI asistan için Google AI Studio API anahtarı |
+| `GEMINI_MODEL` | — | Varsayılan: `gemini-2.5-flash-lite` |
 
-> **Not — Arka plan görev dayanıklılığı:** Analiz ve temizleme işlemleri FastAPI `BackgroundTasks` ile çalışır. Sunucu kapanırsa yarım kalan görevler yeniden başlatılamaz; yeniden başlatmada `error` durumuna alınırlar. Çok-worker veya yüksek-ölçekli kurulumlar için Celery/RQ/ARQ gibi kalıcı bir görev kuyruğu entegre edilmelidir.
+### 2. Servisleri Başlatın
+
+```bash
+docker-compose up -d
+```
+
+Tüm servisler sağlık kontrollerini geçtikten sonra uygulama `http://localhost` adresinde erişilebilir olur.
+
+### 3. Logları İzleyin (İsteğe Bağlı)
+
+```bash
+docker-compose logs -f backend
+```
+
+### Servisleri Durdurmak
+
+```bash
+docker-compose down
+```
+
+> Veritabanı verisini de silmek için: `docker-compose down -v`
 
 ---
 
-## 📧 SMTP (E-posta Sunucusu) Yapılandırması
+## 📧 SMTP (E-posta) Yapılandırması
 
+Şifre sıfırlama e-postası için `.env` dosyasına aşağıdaki değişkenleri ekleyin:
 
-Parola sıfırlama özelliğinin e-posta gönderebilmesi için Docker kurulumunda SMTP bilgilerinin ayarlanması gerekir. `docker-compose.yml` dosyasındaki ilgili servis ortam değişkenlerine veya ana dizindeki `.env` dosyasına aşağıdaki ortam değişkenlerini girerek yapılandırmayı tamamlayabilirsiniz:
+| Değişken | Örnek | Açıklama |
+|---|---|---|
+| `SMTP_HOST` | `smtp.gmail.com` | SMTP sunucu adresi |
+| `SMTP_PORT` | `587` | Port; 587 → STARTTLS, 465 → SSL/TLS |
+| `SMTP_USER` | `ornek@gmail.com` | Gönderici e-posta adresi |
+| `SMTP_PASSWORD` | `xxxx xxxx xxxx xxxx` | Uygulama şifresi |
 
-- `SMTP_HOST`: SMTP e-posta sunucu adresi (Örn: `smtp.gmail.com`)
-- `SMTP_PORT`: E-posta sunucu portu (Örn: `587` veya `465`). Not: `465` portu doğrudan SSL/TLS şifreli bağlantı (SMTP_SSL) kurar; `587` ve diğer standart portlar ise STARTTLS protokolünü kullanır.
-- `SMTP_USER`: Gönderici e-posta kullanıcı adı / adresi (Örn: `ornek@gmail.com`)
-- `SMTP_PASSWORD`: E-posta sunucu uygulama şifresi (Örn: `xxxx xxxx xxxx xxxx`)
+> **Geliştirici modu (Fallback):** SMTP değişkenleri boş bırakılırsa e-posta gönderilmez; şifre sıfırlama token'ı backend konsol loglarına yazdırılır. Token arayüze girilerek işlem tamamlanabilir.
 
-**Geliştirme Sunucusu Davranışı (Fallback):**
-Eğer SMTP değişkenleri tanımlanmazsa (boş bırakılırsa), sistem otomatik olarak geliştirici modunda (development fallback) çalışacaktır. Bu modda e-posta gönderimi yapılmaz; şifre sıfırlama token'ları backend servis konsol loglarına yazdırılır. Arayüz üzerinden kod girilerek şifre sıfırlama işlemi sorunsuzca tamamlanabilir.
+---
+
+## 🤖 AI Asistan (Gemini)
+
+Kullanıcılar **Chatbot** bileşeni üzerinden Gemini destekli bir asistanla etkileşime girebilir. Asistan yalnızca kimliği doğrulanmış kullanıcılara açıktır.
+
+- API anahtarı yalnızca sunucu tarafında tutulur (`GEMINI_API_KEY`).
+- Anahtar tanımlanmazsa `/api/v1/assistant/chat` endpoint'i `503` döner.
+- Model varsayılanı: `gemini-2.5-flash-lite` (`.env` ile değiştirilebilir).
+
+---
+
+## 💪 Öne Çıkan Özellikler
+
+- **Kullanıcı Özerkliği:** Hiçbir veri kullanıcı onayı alınmadan değiştirilmez; her adım şeffaf arayüzde sunulur.
+- **Modüler Mimari:** Her analiz taktiği ayrı modül dosyasındadır. Yeni algoritma eklemek mevcut yapıyı bozmaz.
+- **Proje ve Template Sistemi:** Kullanıcılar çalışmalarını projeler altında gruplar, sık kullanılan konfigürasyonları şablon olarak kaydeder.
+- **Veri Karşılaştırma:** `ComparisonView` bileşeni ile temizleme öncesi ve sonrası veri yan yana incelenebilir.
+- **Audit Log:** Tüm işlem adımları saniye bazında veritabanına kaydedilir.
+- **Rate Limiting:** IP tabanlı istek sınırlama ile API kötüye kullanımı önlenir.
+- **SMTP Fallback:** Geliştirme ortamında SMTP yapılandırması gerektirmeden şifre sıfırlama akışı çalışır.
