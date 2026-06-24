@@ -1,5 +1,7 @@
 # Environments
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -28,3 +30,17 @@ uploads/*
 !uploads/.gitkeep
 outputs/*
 !outputs/.gitkeep
+
+# Build / dist
+dist/
+build/
+frontend-new/dist/
+
+# Test data files
+test_dummy.*
+*.test.csv
+*.test.xlsx
+
+# OS junk
+.DS_Store
+Thumbs.db
