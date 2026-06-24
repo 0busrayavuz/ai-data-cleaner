@@ -81,6 +81,7 @@ class User(Base):
 
     id              = Column(Integer, primary_key=True, autoincrement=True)
     email           = Column(String, unique=True, index=True, nullable=False)
+    full_name       = Column(String, nullable=True)
     hashed_password = Column(String, nullable=False)
     created_at      = Column(DateTime, default=datetime.utcnow)
 
@@ -97,6 +98,17 @@ class PasswordResetToken(Base):
 
 def run_light_migrations():
     is_sqlite = SQLALCHEMY_DATABASE_URL.startswith("sqlite")
+
+    # 0. Update users columns
+    try:
+        inspector = inspect(engine)
+        if inspector.has_table("users"):
+            cols = {c["name"] for c in inspector.get_columns("users")}
+            if "full_name" not in cols:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE users ADD COLUMN full_name VARCHAR"))
+    except Exception as e:
+        logger.warning("[Migration] users sütun güncellemesi başarısız: %s", e)
 
     # 1. Update datasets columns
     try:

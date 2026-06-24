@@ -145,6 +145,15 @@ export async function fetchAccountSummary() {
   }
 }
 
+export async function updateProfile(fullName) {
+  try {
+    const res = await api.patch('/me/profile', { full_name: fullName });
+    return res.data;
+  } catch (e) {
+    throw new Error(parseDetail(e));
+  }
+}
+
 export async function changePassword(currentPassword, newPassword) {
   try {
     const res = await api.post('/me/password', {

@@ -62,6 +62,10 @@ class ChangePasswordBody(BaseModel):
     new_password: str = Field(..., min_length=8)
 
 
+class UpdateProfileBody(BaseModel):
+    full_name: str | None = Field(None, max_length=100)
+
+
 # ── SMTP / e-posta gönderme ──────────────────────────────────────────────────
 
 def send_reset_email(to_email: str, token: str) -> bool:
@@ -190,6 +194,7 @@ def account_summary(user: User = Depends(get_current_user), db: Session = Depend
         "user": {
             "id": db_user.id,
             "email": db_user.email,
+            "full_name": db_user.full_name,
             "created_at": db_user.created_at.isoformat() if db_user.created_at else None,
         },
         "usage": {
@@ -206,6 +211,24 @@ def account_summary(user: User = Depends(get_current_user), db: Session = Depend
             "supported_formats": ["CSV", "XLSX", "TXT"],
         },
     }
+
+
+@router.patch("/me/profile")
+def update_profile(
+    body: UpdateProfileBody,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db_user = db.query(User).filter(User.id == user.id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı.")
+    
+    if body.full_name is not None:
+        db_user.full_name = body.full_name.strip()
+    
+    db.commit()
+    db.refresh(db_user)
+    return {"message": "Profil güncellendi.", "full_name": db_user.full_name}
 
 
 @router.post("/me/password")
